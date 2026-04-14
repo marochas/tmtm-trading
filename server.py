@@ -18,7 +18,12 @@ from datetime import date, datetime
 from pathlib import Path
 
 PORT = int(os.environ.get("PORT", 3000))
-DB_PATH = Path(__file__).parent / "trading.db"
+
+# DB_PATH: použi env premennú pre Railway Volume, inak lokálny súbor
+_default_db = str(Path(__file__).parent / "trading.db")
+DB_PATH = Path(os.environ.get("DB_PATH", _default_db))
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)  # vytvor adresár ak neexistuje
+
 PUBLIC_DIR = Path(__file__).parent / "public"
 
 # ─── DATABASE ─────────────────────────────────────────────────────────────────
