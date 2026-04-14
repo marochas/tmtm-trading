@@ -10,18 +10,10 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0f1117;
-      --bg2: #1a1d27;
-      --bg3: #22263a;
-      --border: #2e3250;
-      --accent: #4f8ef7;
-      --accent2: #6c63ff;
-      --green: #22c55e;
-      --yellow: #f59e0b;
-      --red: #ef4444;
-      --text: #e2e8f0;
-      --text2: #94a3b8;
-      --radius: 10px;
+      --bg: #0f1117; --bg2: #1a1d27; --bg3: #22263a; --border: #2e3250;
+      --accent: #4f8ef7; --accent2: #6c63ff;
+      --green: #22c55e; --yellow: #f59e0b; --red: #ef4444;
+      --text: #e2e8f0; --text2: #94a3b8; --radius: 10px;
     }
     body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
     #root { min-height: 100vh; }
@@ -33,18 +25,30 @@
     .logo { padding: 22px 20px 18px; border-bottom: 1px solid var(--border); }
     .logo h1 { font-size: 1.25rem; font-weight: 700; color: var(--accent); letter-spacing: -0.3px; }
     .logo p { font-size: 0.72rem; color: var(--text2); margin-top: 2px; }
-    .nav { padding: 12px 0; flex: 1; }
+    .nav { padding: 12px 0; flex: 1; overflow-y: auto; }
     .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer; color: var(--text2); font-size: 0.9rem; border-left: 3px solid transparent; transition: all 0.15s; }
     .nav-item:hover { background: var(--bg3); color: var(--text); }
     .nav-item.active { color: var(--accent); background: rgba(79,142,247,0.1); border-left-color: var(--accent); }
     .nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
+    .user-panel { padding: 12px 14px; border-top: 1px solid var(--border); }
+    .user-info { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .user-name { font-size: 0.82rem; font-weight: 600; }
+    .user-role { font-size: 0.68rem; color: var(--text2); }
+
+    /* Login */
+    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); padding: 20px; }
+    .login-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 36px; width: 100%; max-width: 380px; }
+    .login-logo { text-align: center; margin-bottom: 28px; }
+    .login-logo h1 { font-size: 1.8rem; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+    .login-logo p { color: var(--text2); font-size: 0.875rem; }
 
     /* Cards */
     .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
     .card-sm { padding: 14px 18px; }
 
     /* KPI Grid */
-    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 24px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
     .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
     .kpi-label { font-size: 0.72rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
     .kpi-value { font-size: 1.8rem; font-weight: 700; line-height: 1; }
@@ -59,8 +63,11 @@
     .btn-sm { padding: 5px 12px; font-size: 0.8rem; }
     .btn-danger { background: rgba(239,68,68,0.15); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
     .btn-danger:hover { background: rgba(239,68,68,0.25); }
+    .btn-success { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid rgba(34,197,94,0.3); }
+    .btn-success:hover { background: rgba(34,197,94,0.25); }
+    .btn:disabled { opacity: 0.55; cursor: not-allowed; }
 
-    /* Badges / Tags */
+    /* Badges */
     .badge { display: inline-block; padding: 2px 9px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
     .badge-green { background: rgba(34,197,94,0.15); color: var(--green); }
     .badge-yellow { background: rgba(245,158,11,0.15); color: var(--yellow); }
@@ -68,7 +75,7 @@
     .badge-blue { background: rgba(79,142,247,0.15); color: var(--accent); }
     .badge-gray { background: var(--bg3); color: var(--text2); }
 
-    /* Verdict big banner */
+    /* Verdict */
     .verdict-banner { border-radius: var(--radius); padding: 16px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 14px; font-weight: 700; font-size: 1.1rem; }
     .verdict-go { background: rgba(34,197,94,0.12); border: 1.5px solid var(--green); color: var(--green); }
     .verdict-confirm { background: rgba(245,158,11,0.12); border: 1.5px solid var(--yellow); color: var(--yellow); }
@@ -99,8 +106,16 @@
     input:focus, select:focus, textarea:focus { border-color: var(--accent); }
     textarea { resize: vertical; min-height: 70px; }
     select option { background: var(--bg3); }
+    input[readonly] { opacity: 0.7; cursor: not-allowed; }
 
-    /* Dividers, headers */
+    /* Image upload */
+    .img-upload-box { border: 2px dashed var(--border); border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.15s; }
+    .img-upload-box:hover { border-color: var(--accent); }
+    .img-upload-box.has-img { padding: 0; border-style: solid; overflow: hidden; }
+    .img-upload-box img { width: 100%; max-height: 300px; object-fit: contain; display: block; border-radius: 8px; }
+    .img-preview-full { width: 100%; max-height: 400px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; }
+
+    /* Page headers */
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
     .page-title { font-size: 1.4rem; font-weight: 700; }
     .section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.7px; color: var(--text2); margin-bottom: 12px; font-weight: 600; }
@@ -124,10 +139,10 @@
 
     /* Votes bar */
     .votes-bar { display: flex; gap: 2px; height: 8px; border-radius: 6px; overflow: hidden; margin: 8px 0; }
-    .votes-bar-seg { height: 100%; transition: width 0.3s; }
+    .votes-bar-seg { height: 100%; }
 
     /* Modal */
-    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .modal-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; display: flex; align-items: center; justify-content: center; padding: 20px; }
     .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; width: 100%; max-width: 700px; max-height: 90vh; overflow-y: auto; padding: 28px; position: relative; }
     .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
     .modal-title { font-size: 1.2rem; font-weight: 700; }
@@ -147,8 +162,8 @@
     .alert-error { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); color: #fca5a5; }
 
     /* Tabs */
-    .tabs { display: flex; gap: 4px; background: var(--bg3); border-radius: 9px; padding: 4px; margin-bottom: 20px; }
-    .tab { flex: 1; padding: 7px; text-align: center; border-radius: 7px; cursor: pointer; font-size: 0.83rem; color: var(--text2); transition: all 0.15s; }
+    .tabs { display: flex; gap: 4px; background: var(--bg3); border-radius: 9px; padding: 4px; margin-bottom: 20px; flex-wrap: wrap; }
+    .tab { flex: 1; padding: 7px 6px; text-align: center; border-radius: 7px; cursor: pointer; font-size: 0.83rem; color: var(--text2); transition: all 0.15s; white-space: nowrap; }
     .tab.active { background: var(--bg2); color: var(--text); box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
 
     /* Settings */
@@ -157,6 +172,21 @@
     .tag { display: flex; align-items: center; gap: 6px; background: var(--bg3); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 0.82rem; }
     .tag-remove { cursor: pointer; color: var(--text2); font-size: 1rem; line-height: 1; }
     .tag-remove:hover { color: var(--red); }
+
+    /* Stats grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .stat-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+    .stat-row:last-child { border-bottom: none; }
+
+    /* Result colors */
+    .result-pos { color: var(--green); font-weight: 700; }
+    .result-neg { color: var(--red); font-weight: 700; }
+
+    /* User table */
+    .user-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .user-table th { text-align: left; padding: 8px 12px; color: var(--text2); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    .user-table td { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+    .user-table tr:last-child td { border-bottom: none; }
 
     .spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -174,19 +204,27 @@
       .main { margin-left: 200px; padding: 16px; }
       .detail-grid { grid-template-columns: 1fr; }
       .form-grid { grid-template-columns: 1fr; }
+      .stats-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const { useState, useEffect, useCallback } = React;
+const { useState, useEffect, useCallback, useRef } = React;
 
-const API = '';
+// ─── AUTH TOKEN ──────────────────────────────────────────────────────────────
+
+function getToken() { try { return localStorage.getItem('tmtm_token'); } catch { return null; } }
+function setToken(t) { try { localStorage.setItem('tmtm_token', t); } catch {} }
+function clearToken() { try { localStorage.removeItem('tmtm_token'); } catch {} }
 
 async function apiFetch(path, opts = {}) {
-  const res = await fetch(API + path, {
-    headers: { 'Content-Type': 'application/json' },
+  const token = getToken();
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['X-Auth-Token'] = token;
+  const res = await fetch(path, {
+    headers,
     ...opts,
     body: opts.body ? JSON.stringify(opts.body) : undefined
   });
@@ -197,17 +235,34 @@ async function apiFetch(path, opts = {}) {
   return res.json();
 }
 
-// ─── VERDICT HELPERS ────────────────────────────────────────────────────────
+// ─── IMAGE UTIL ──────────────────────────────────────────────────────────────
 
-function VerdictBadge({ verdict, size = 'sm' }) {
+function resizeImageToBase64(file, maxWidth = 1200, quality = 0.82) {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const img = new window.Image();
+      img.onload = () => {
+        let w = img.width, h = img.height;
+        if (w > maxWidth) { h = Math.round(h * maxWidth / w); w = maxWidth; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', quality));
+      };
+      img.src = ev.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+function VerdictBadge({ verdict }) {
   const map = {
-    'Schválené': 'badge-green',
-    'Na revíziu': 'badge-yellow',
-    'Zamietnuté': 'badge-red',
-    'Obchodovať': 'badge-green',
-    'Na potvrdenie': 'badge-yellow',
-    'Neobchodovať': 'badge-red',
-    'Bez hodnotenia': 'badge-gray',
+    'Schválené': 'badge-green', 'Na revíziu': 'badge-yellow', 'Zamietnuté': 'badge-red',
+    'Obchodovať': 'badge-green', 'Na potvrdenie': 'badge-yellow',
+    'Neobchodovať': 'badge-red', 'Bez hodnotenia': 'badge-gray',
   };
   return <span className={`badge ${map[verdict] || 'badge-gray'}`}>{verdict}</span>;
 }
@@ -228,13 +283,72 @@ function VerdictBanner({ verdict }) {
   );
 }
 
-// ─── DIRECTION / CONTEXT HELPERS ────────────────────────────────────────────
-
 function DirectionBadge({ dir }) {
   return <span className={`badge ${dir === 'Long' ? 'badge-green' : 'badge-red'}`}>{dir === 'Long' ? '▲ Long' : '▼ Short'}</span>;
 }
 
-// ─── DASHBOARD ──────────────────────────────────────────────────────────────
+function TradeStatusBadge({ status }) {
+  if (!status) return null;
+  const map = {
+    'Otvorený': 'badge-blue', 'Uzatvorený': 'badge-green', 'Zrušený': 'badge-gray'
+  };
+  const icons = { 'Otvorený': '🟦', 'Uzatvorený': '✅', 'Zrušený': '⛔' };
+  return <span className={`badge ${map[status] || 'badge-gray'}`}>{icons[status] || ''} {status}</span>;
+}
+
+// ─── LOGIN PAGE ───────────────────────────────────────────────────────────────
+
+function LoginPage({ onLogin }) {
+  const [form, setForm] = useState({ username: '', password: '' });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    try {
+      const { token, user } = await apiFetch('/api/auth/login', { method: 'POST', body: form });
+      setToken(token);
+      onLogin(user);
+    } catch (e) { setError(e.message); }
+    setLoading(false);
+  };
+
+  return (
+    <div className="login-page">
+      <div className="login-card">
+        <div className="login-logo">
+          <div style={{fontSize:'2.5rem', marginBottom:8}}>📈</div>
+          <h1>TMTM Trading</h1>
+          <p>Tímová analýza obchodov</p>
+        </div>
+        {error && <div className="alert alert-error">{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group" style={{marginBottom:14}}>
+            <label>Používateľské meno</label>
+            <input autoFocus value={form.username} onChange={e => setForm(f => ({...f, username: e.target.value}))}
+              placeholder="tomino / maros / milos / topier" required/>
+          </div>
+          <div className="form-group" style={{marginBottom:20}}>
+            <label>Heslo</label>
+            <input type="password" value={form.password} onChange={e => setForm(f => ({...f, password: e.target.value}))}
+              placeholder="••••••••" required/>
+          </div>
+          <button type="submit" className="btn btn-primary" style={{width:'100%', justifyContent:'center', padding:'10px'}} disabled={loading}>
+            {loading ? <><div className="spinner" style={{width:16,height:16}}/> Prihlasujem...</> : '🔓 Prihlásiť sa'}
+          </button>
+        </form>
+        <div style={{marginTop:20, padding:'12px 14px', background:'var(--bg3)', borderRadius:8, fontSize:'0.78rem', color:'var(--text2)', lineHeight:1.7}}>
+          <strong style={{color:'var(--text)'}}>Predvolené heslá:</strong><br/>
+          tomino / maros / milos / topier → <code style={{color:'var(--accent)'}}>tmtm2024</code><br/>
+          admin → <code style={{color:'var(--accent)'}}>admin123</code>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── DASHBOARD ───────────────────────────────────────────────────────────────
 
 function Dashboard({ onNavigate }) {
   const [data, setData] = useState(null);
@@ -247,8 +361,6 @@ function Dashboard({ onNavigate }) {
 
   if (!data) return <div style={{display:'flex',alignItems:'center',gap:10,padding:40}}><div className="spinner"/><span>Načítavam...</span></div>;
 
-  const recentTrades = trades.slice(0, 5);
-
   return (
     <div>
       <div className="page-header">
@@ -260,6 +372,14 @@ function Dashboard({ onNavigate }) {
         <div className="kpi">
           <div className="kpi-label">Obchodné nápady</div>
           <div className="kpi-value" style={{color:'var(--accent)'}}>{data.total_trades}</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-label">Otvorené</div>
+          <div className="kpi-value" style={{color:'var(--accent)'}}>{data.open_trades || 0}</div>
+        </div>
+        <div className="kpi">
+          <div className="kpi-label">Uzatvorené</div>
+          <div className="kpi-value" style={{color:'var(--green)'}}>{data.closed_trades || 0}</div>
         </div>
         <div className="kpi">
           <div className="kpi-label">Celkové hodnotenia</div>
@@ -278,49 +398,38 @@ function Dashboard({ onNavigate }) {
       <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:16, marginBottom:24}}>
         <div className="card">
           <div className="section-title">Výsledky hodnotení</div>
-          <div style={{display:'flex', flexDirection:'column', gap:10}}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <span style={{color:'var(--green)', fontWeight:600}}>✅ Schválené</span>
-              <span style={{fontSize:'1.3rem', fontWeight:700}}>{data.approved_reviews}</span>
+          {[['✅ Schválené', 'var(--green)', data.approved_reviews],
+            ['⚠️ Na revíziu', 'var(--yellow)', data.revision_reviews],
+            ['❌ Zamietnuté', 'var(--red)', data.rejected_reviews]].map(([label, color, val]) => (
+            <div key={label} style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10}}>
+              <span style={{color, fontWeight:600}}>{label}</span>
+              <span style={{fontSize:'1.3rem', fontWeight:700}}>{val}</span>
             </div>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <span style={{color:'var(--yellow)', fontWeight:600}}>⚠️ Na revíziu</span>
-              <span style={{fontSize:'1.3rem', fontWeight:700}}>{data.revision_reviews}</span>
-            </div>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <span style={{color:'var(--red)', fontWeight:600}}>❌ Zamietnuté</span>
-              <span style={{fontSize:'1.3rem', fontWeight:700}}>{data.rejected_reviews}</span>
-            </div>
-          </div>
+          ))}
         </div>
         <div className="card">
           <div className="section-title">Tímové rozhodnutia</div>
-          <div style={{display:'flex', flexDirection:'column', gap:10}}>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <span style={{color:'var(--green)', fontWeight:600}}>📈 Obchodovať</span>
-              <span style={{fontSize:'1.3rem', fontWeight:700}}>{data.trade_to_go}</span>
+          {[['📈 Obchodovať', 'var(--green)', data.trade_to_go],
+            ['🔄 Na potvrdenie', 'var(--yellow)', data.trade_confirm],
+            ['🚫 Neobchodovať', 'var(--red)', data.trade_no]].map(([label, color, val]) => (
+            <div key={label} style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:10}}>
+              <span style={{color, fontWeight:600}}>{label}</span>
+              <span style={{fontSize:'1.3rem', fontWeight:700}}>{val}</span>
             </div>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <span style={{color:'var(--yellow)', fontWeight:600}}>🔄 Na potvrdenie</span>
-              <span style={{fontSize:'1.3rem', fontWeight:700}}>{data.trade_confirm}</span>
-            </div>
-            <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
-              <span style={{color:'var(--red)', fontWeight:600}}>🚫 Neobchodovať</span>
-              <span style={{fontSize:'1.3rem', fontWeight:700}}>{data.trade_no}</span>
-            </div>
-          </div>
+          ))}
         </div>
       </div>
 
-      {recentTrades.length > 0 && (
+      {trades.slice(0, 5).length > 0 && (
         <div className="card">
           <div className="section-title">Posledné obchodné nápady</div>
-          {recentTrades.map(t => (
+          {trades.slice(0, 5).map(t => (
             <div key={t.id} className="detail-row" style={{cursor:'pointer'}} onClick={() => onNavigate('trade-detail', t.id)}>
               <div style={{display:'flex', alignItems:'center', gap:10}}>
                 <span style={{fontFamily:'monospace', fontSize:'0.75rem', color:'var(--text2)'}}>{t.id}</span>
                 <span style={{fontWeight:600}}>{t.instrument}</span>
                 <DirectionBadge dir={t.direction} />
+                <TradeStatusBadge status={t.trade_status} />
               </div>
               <div style={{display:'flex', alignItems:'center', gap:8}}>
                 <span style={{fontSize:'0.78rem', color:'var(--text2)'}}>{t.review_count} hodnotení</span>
@@ -339,7 +448,7 @@ function Dashboard({ onNavigate }) {
   );
 }
 
-// ─── TRADES LIST ────────────────────────────────────────────────────────────
+// ─── TRADES LIST ─────────────────────────────────────────────────────────────
 
 function TradesList({ onNavigate }) {
   const [trades, setTrades] = useState([]);
@@ -352,7 +461,8 @@ function TradesList({ onNavigate }) {
 
   const filtered = trades.filter(t => {
     if (filter === 'all') return true;
-    if (filter === 'active') return t.status === 'Aktívny';
+    if (filter === 'open') return t.trade_status === 'Otvorený';
+    if (filter === 'closed') return t.trade_status === 'Uzatvorený';
     if (filter === 'go') return t.team_verdict === 'Obchodovať';
     if (filter === 'pending') return t.team_verdict === 'Na potvrdenie';
     return true;
@@ -366,13 +476,11 @@ function TradesList({ onNavigate }) {
         <div className="page-title">💼 Obchodné nápady</div>
         <button className="btn btn-primary" onClick={() => onNavigate('new-trade')}>+ Nový obchod</button>
       </div>
-
       <div className="tabs">
-        {[['all','Všetky'],['active','Aktívne'],['go','Obchodovať'],['pending','Na potvrdenie']].map(([k,l]) => (
+        {[['all','Všetky'],['open','Otvorené'],['closed','Uzatvorené'],['go','Obchodovať'],['pending','Na potvrdenie']].map(([k,l]) => (
           <div key={k} className={`tab ${filter===k?'active':''}`} onClick={() => setFilter(k)}>{l}</div>
         ))}
       </div>
-
       {filtered.length === 0 ? (
         <div className="empty-state">
           <div className="empty-icon">📋</div>
@@ -397,16 +505,31 @@ function TradeCard({ trade: t, onNavigate }) {
           <div className="trade-id">{t.id} · {t.created_at}</div>
           <div className="trade-instrument">{t.instrument}</div>
         </div>
-        <VerdictBadge verdict={t.team_verdict} />
+        <div style={{display:'flex', flexDirection:'column', alignItems:'flex-end', gap:5}}>
+          <VerdictBadge verdict={t.team_verdict} />
+          <TradeStatusBadge status={t.trade_status} />
+        </div>
       </div>
       <div className="trade-meta">
         <DirectionBadge dir={t.direction} />
         <span className="badge badge-blue">{t.timeframe}</span>
         <span className={`badge ${t.trend_context === 'Do trendu' ? 'badge-green' : 'badge-yellow'}`}>{t.trend_context}</span>
       </div>
-      <div style={{fontSize:'0.82rem', color:'var(--text2)', marginBottom:8, lineHeight:1.5}}>{t.idea_description?.substring(0, 100)}{t.idea_description?.length > 100 ? '...' : ''}</div>
+      {(t.entry_price || t.stop_loss || t.take_profit) && (
+        <div style={{display:'flex', gap:12, fontSize:'0.78rem', color:'var(--text2)', marginBottom:8}}>
+          {t.entry_price && <span>E: <strong style={{color:'var(--text)'}}>{t.entry_price}</strong></span>}
+          {t.stop_loss && <span>SL: <strong style={{color:'var(--red)'}}>{t.stop_loss}</strong></span>}
+          {t.take_profit && <span>TP: <strong style={{color:'var(--green)'}}>{t.take_profit}</strong></span>}
+        </div>
+      )}
+      {t.trade_status === 'Uzatvorený' && t.result_pips !== null && t.result_pips !== undefined && (
+        <div style={{fontSize:'0.82rem', marginBottom:8}}>
+          Výsledok: <span className={t.result_pips >= 0 ? 'result-pos' : 'result-neg'}>{t.result_pips >= 0 ? '+' : ''}{t.result_pips} pips</span>
+          {t.result_rr && <span style={{color:'var(--text2)', marginLeft:8}}>({t.result_rr >= 0 ? '+' : ''}{t.result_rr}R)</span>}
+        </div>
+      )}
       <div style={{fontSize:'0.75rem', color:'var(--text2)', marginBottom:6}}>Zadal: <strong style={{color:'var(--text)'}}>{t.submitted_by}</strong></div>
-      {total > 0 && (
+      {total > 0 ? (
         <div>
           <div className="votes-bar">
             {t.approved > 0 && <div className="votes-bar-seg" style={{width:`${t.approved/total*100}%`, background:'var(--green)'}}/>}
@@ -420,18 +543,21 @@ function TradeCard({ trade: t, onNavigate }) {
             <span style={{fontSize:'0.75rem', color:'var(--text2)', marginLeft:'auto'}}>{total} hodnotení</span>
           </div>
         </div>
+      ) : (
+        <div style={{fontSize:'0.78rem', color:'var(--text2)'}}>Žiadne hodnotenia ešte</div>
       )}
-      {total === 0 && <div style={{fontSize:'0.78rem', color:'var(--text2)'}}>Žiadne hodnotenia ešte</div>}
     </div>
   );
 }
 
-// ─── TRADE DETAIL ───────────────────────────────────────────────────────────
+// ─── TRADE DETAIL ─────────────────────────────────────────────────────────────
 
-function TradeDetail({ tradeId, onNavigate, onReview }) {
+function TradeDetail({ tradeId, onNavigate, onReview, currentUser }) {
   const [trade, setTrade] = useState(null);
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState(null);
+  const [showClose, setShowClose] = useState(false);
+  const [showImgFull, setShowImgFull] = useState(false);
 
   const reload = useCallback(() => {
     apiFetch(`/api/trades/${tradeId}`).then(t => { setTrade(t); setLoading(false); });
@@ -446,9 +572,10 @@ function TradeDetail({ tradeId, onNavigate, onReview }) {
   if (!trade) return <div className="alert alert-error">Obchod nenájdený.</div>;
 
   const conditions = [trade.condition1, trade.condition2, trade.condition3, trade.condition4].filter(Boolean);
-  const traders = config.traders;
   const reviewedBy = trade.reviews.map(r => r.reviewer);
-  const pendingTraders = traders.filter(t => !reviewedBy.includes(t));
+  const pendingTraders = config.traders.filter(t => !reviewedBy.includes(t));
+  const canClose = currentUser && (currentUser.role === 'admin' || currentUser.trader_name === trade.submitted_by);
+  const hasReviewed = currentUser?.trader_name && reviewedBy.includes(currentUser.trader_name);
 
   return (
     <div>
@@ -464,61 +591,168 @@ function TradeDetail({ tradeId, onNavigate, onReview }) {
             <span className={`badge ${trade.trend_context === 'Do trendu' ? 'badge-green' : 'badge-yellow'}`}>{trade.trend_context}</span>
             <span className="badge badge-gray">{trade.entry_type} vstup</span>
             <span className="badge badge-gray">HTF: {trade.htf_confirmed}</span>
+            <TradeStatusBadge status={trade.trade_status} />
           </div>
         </div>
-        <div style={{display:'flex', gap:8}}>
-          <button className="btn btn-primary btn-sm" onClick={() => onReview(trade)}>+ Moje hodnotenie</button>
+        <div style={{display:'flex', gap:8, flexWrap:'wrap', justifyContent:'flex-end'}}>
+          {trade.trade_status === 'Otvorený' && (
+            <button className="btn btn-primary btn-sm" onClick={() => onReview(trade)}>
+              {hasReviewed ? '✏️ Upraviť hodnotenie' : '+ Moje hodnotenie'}
+            </button>
+          )}
+          {canClose && trade.trade_status === 'Otvorený' && (
+            <button className="btn btn-success btn-sm" onClick={() => setShowClose(true)}>🏁 Uzatvoriť obchod</button>
+          )}
         </div>
       </div>
 
       <VerdictBanner verdict={trade.team_verdict} />
 
+      {/* Result banner if closed */}
+      {trade.trade_status === 'Uzatvorený' && (
+        <div style={{background:'var(--bg2)', border:'1px solid var(--border)', borderRadius:10, padding:'14px 20px', marginBottom:20}}>
+          <div className="section-title">Výsledok obchodu</div>
+          <div style={{display:'flex', gap:24, flexWrap:'wrap'}}>
+            <div>
+              <div style={{fontSize:'0.72rem', color:'var(--text2)'}}>Dátum uzatvorenia</div>
+              <div style={{fontWeight:600}}>{trade.close_date || '—'}</div>
+            </div>
+            {trade.result_pips !== null && trade.result_pips !== undefined && (
+              <div>
+                <div style={{fontSize:'0.72rem', color:'var(--text2)'}}>Pips</div>
+                <div className={trade.result_pips >= 0 ? 'result-pos' : 'result-neg'} style={{fontSize:'1.3rem'}}>
+                  {trade.result_pips >= 0 ? '+' : ''}{trade.result_pips}
+                </div>
+              </div>
+            )}
+            {trade.result_rr !== null && trade.result_rr !== undefined && (
+              <div>
+                <div style={{fontSize:'0.72rem', color:'var(--text2)'}}>R násobok</div>
+                <div className={trade.result_rr >= 0 ? 'result-pos' : 'result-neg'} style={{fontSize:'1.3rem'}}>
+                  {trade.result_rr >= 0 ? '+' : ''}{trade.result_rr}R
+                </div>
+              </div>
+            )}
+            {trade.result_note && (
+              <div style={{flex:1}}>
+                <div style={{fontSize:'0.72rem', color:'var(--text2)'}}>Poznámka</div>
+                <div style={{fontSize:'0.875rem'}}>{trade.result_note}</div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="detail-grid" style={{marginBottom:20}}>
         <div className="card">
           <div className="section-title">Myšlienka setupu</div>
-          <p style={{fontSize:'0.9rem', lineHeight:1.6, color:'var(--text)'}}>{trade.idea_description}</p>
+          <p style={{fontSize:'0.9rem', lineHeight:1.6}}>{trade.idea_description}</p>
           <div style={{marginTop:12, fontSize:'0.8rem', color:'var(--text2)'}}>Zadal: <strong style={{color:'var(--text)'}}>{trade.submitted_by}</strong></div>
+
+          {/* Submitter's entry levels */}
+          {(trade.entry_price || trade.stop_loss || trade.take_profit) && (
+            <div style={{marginTop:14}}>
+              <div className="section-title">Plánované hodnoty</div>
+              <div style={{display:'flex', gap:12, flexWrap:'wrap'}}>
+                {trade.entry_price && (
+                  <div className="stat-box" style={{flex:1}}>
+                    <div className="stat-box-label">Entry</div>
+                    <div className="stat-box-value">{trade.entry_price}</div>
+                  </div>
+                )}
+                {trade.stop_loss && (
+                  <div className="stat-box" style={{flex:1}}>
+                    <div className="stat-box-label">Stop Loss</div>
+                    <div className="stat-box-value" style={{color:'var(--red)'}}>{trade.stop_loss}</div>
+                  </div>
+                )}
+                {trade.take_profit && (
+                  <div className="stat-box" style={{flex:1}}>
+                    <div className="stat-box-label">Take Profit</div>
+                    <div className="stat-box-value" style={{color:'var(--green)'}}>{trade.take_profit}</div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
         <div className="card">
           <div className="section-title">Spoločné podmienky</div>
-          {conditions.length === 0 ? <div style={{color:'var(--text2)', fontSize:'0.85rem'}}>Žiadne podmienky</div> : conditions.map((c, i) => (
-            <div key={i} className="condition-item">
-              <div className="condition-dot cond-active"/>
-              <span style={{fontSize:'0.85rem'}}>{c}</span>
-            </div>
-          ))}
+          {conditions.length === 0 ? <div style={{color:'var(--text2)', fontSize:'0.85rem'}}>Žiadne podmienky</div>
+            : conditions.map((c, i) => (
+              <div key={i} className="condition-item">
+                <div className="condition-dot cond-active"/>
+                <span style={{fontSize:'0.85rem'}}>{c}</span>
+              </div>
+            ))}
         </div>
       </div>
+
+      {/* TradingView Screenshot */}
+      {trade.image_data && (
+        <div className="card" style={{marginBottom:20}}>
+          <div className="section-title">📸 TradingView analýza</div>
+          <img src={trade.image_data} alt="TradingView chart" className="img-preview-full"
+            onClick={() => setShowImgFull(true)} title="Klikni pre zväčšenie"/>
+        </div>
+      )}
+
+      {/* Team consensus */}
+      {(trade.avg_entry || trade.avg_sl || trade.avg_tp) && (
+        <div className="card" style={{marginBottom:20}}>
+          <div className="section-title">Konsenzus tímu (priemer hodnotení)</div>
+          <div style={{display:'flex', gap:16, flexWrap:'wrap'}}>
+            {trade.avg_entry && <div className="stat-box" style={{flex:1}}>
+              <div className="stat-box-label">Priemerný Entry</div>
+              <div className="stat-box-value">{trade.avg_entry}</div>
+            </div>}
+            {trade.avg_sl && <div className="stat-box" style={{flex:1}}>
+              <div className="stat-box-label">Priemerný SL</div>
+              <div className="stat-box-value" style={{color:'var(--red)'}}>{trade.avg_sl}</div>
+            </div>}
+            {trade.avg_tp && <div className="stat-box" style={{flex:1}}>
+              <div className="stat-box-label">Priemerný TP</div>
+              <div className="stat-box-value" style={{color:'var(--green)'}}>{trade.avg_tp}</div>
+            </div>}
+            {trade.avg_rrr && <div className="stat-box" style={{flex:1}}>
+              <div className="stat-box-label">Priemerné RRR</div>
+              <div className="stat-box-value" style={{color: trade.avg_rrr >= 1.5 ? 'var(--green)' : 'var(--yellow)'}}>{trade.avg_rrr}</div>
+            </div>}
+          </div>
+        </div>
+      )}
 
       {/* Votes summary */}
       <div className="card" style={{marginBottom:20}}>
         <div className="section-title">Hlasovanie tímu</div>
         <div style={{display:'flex', gap:24, marginBottom:12}}>
-          <div style={{display:'flex', alignItems:'center', gap:8}}>
-            <span style={{color:'var(--green)', fontSize:'1.5rem', fontWeight:700}}>{trade.approved}</span>
-            <span style={{color:'var(--text2)', fontSize:'0.85rem'}}>Schválené</span>
-          </div>
-          <div style={{display:'flex', alignItems:'center', gap:8}}>
-            <span style={{color:'var(--yellow)', fontSize:'1.5rem', fontWeight:700}}>{trade.revision}</span>
-            <span style={{color:'var(--text2)', fontSize:'0.85rem'}}>Na revíziu</span>
-          </div>
-          <div style={{display:'flex', alignItems:'center', gap:8}}>
-            <span style={{color:'var(--red)', fontSize:'1.5rem', fontWeight:700}}>{trade.rejected}</span>
-            <span style={{color:'var(--text2)', fontSize:'0.85rem'}}>Zamietnuté</span>
-          </div>
+          {[['var(--green)', trade.approved, 'Schválené'],
+            ['var(--yellow)', trade.revision, 'Na revíziu'],
+            ['var(--red)', trade.rejected, 'Zamietnuté']].map(([color, val, label]) => (
+            <div key={label} style={{display:'flex', alignItems:'center', gap:8}}>
+              <span style={{color, fontSize:'1.5rem', fontWeight:700}}>{val}</span>
+              <span style={{color:'var(--text2)', fontSize:'0.85rem'}}>{label}</span>
+            </div>
+          ))}
         </div>
         {pendingTraders.length > 0 && (
-          <div style={{fontSize:'0.8rem', color:'var(--text2)'}}>
-            ⏳ Čakáme na: {pendingTraders.join(', ')}
-          </div>
+          <div style={{fontSize:'0.8rem', color:'var(--text2)'}}>⏳ Čakáme na: {pendingTraders.join(', ')}</div>
         )}
       </div>
 
-      {/* Reviews */}
       <div className="section-title">Hodnotenia traderov ({trade.reviews.length})</div>
       {trade.reviews.length === 0 ? (
         <div className="alert alert-info">Zatiaľ nikto nehodnotil tento obchod.</div>
       ) : trade.reviews.map(r => <ReviewCard key={r.id} review={r} />)}
+
+      {showClose && (
+        <CloseTradeModal trade={trade} onClose={() => setShowClose(false)} onClosed={() => { setShowClose(false); reload(); }}/>
+      )}
+      {showImgFull && (
+        <div className="modal-bg" onClick={() => setShowImgFull(false)}>
+          <img src={trade.image_data} alt="chart" style={{maxWidth:'95vw', maxHeight:'90vh', borderRadius:10}}/>
+        </div>
+      )}
     </div>
   );
 }
@@ -561,19 +795,15 @@ function ReviewCard({ review: r }) {
         {r.proposed_risk_pct && <span>Risk: <strong style={{color:'var(--text)'}}>{r.proposed_risk_pct}%</strong></span>}
         {r.fixed_plan && <span>Fixný plán: <strong style={{color:'var(--text)'}}>{r.fixed_plan}</strong></span>}
       </div>
-      {customConds.length > 0 && (
-        <div style={{marginBottom:10}}>
-          {customConds.map((c, i) => (
-            <div key={i} className="condition-item">
-              <div className={`condition-dot ${c.met === 'Áno' ? 'cond-active' : 'cond-inactive'}`}/>
-              <span style={{fontSize:'0.82rem'}}>{c.text}</span>
-              <span style={{fontSize:'0.75rem', color: c.met === 'Áno' ? 'var(--green)' : 'var(--text2)', marginLeft:'auto'}}>{c.met}</span>
-            </div>
-          ))}
+      {customConds.map((c, i) => (
+        <div key={i} className="condition-item">
+          <div className={`condition-dot ${c.met === 'Áno' ? 'cond-active' : 'cond-inactive'}`}/>
+          <span style={{fontSize:'0.82rem'}}>{c.text}</span>
+          <span style={{fontSize:'0.75rem', color: c.met === 'Áno' ? 'var(--green)' : 'var(--text2)', marginLeft:'auto'}}>{c.met}</span>
         </div>
-      )}
+      ))}
       {r.comment && (
-        <div style={{background:'var(--bg2)', borderRadius:7, padding:'8px 12px', fontSize:'0.85rem', fontStyle:'italic', color:'var(--text2)', lineHeight:1.5}}>
+        <div style={{background:'var(--bg2)', borderRadius:7, padding:'8px 12px', fontSize:'0.85rem', fontStyle:'italic', color:'var(--text2)', lineHeight:1.5, marginTop:8}}>
           💬 „{r.comment}"
         </div>
       )}
@@ -581,11 +811,79 @@ function ReviewCard({ review: r }) {
   );
 }
 
-// ─── NEW TRADE FORM ──────────────────────────────────────────────────────────
+// ─── CLOSE TRADE MODAL ────────────────────────────────────────────────────────
 
-function NewTradeForm({ onNavigate, config }) {
+function CloseTradeModal({ trade, onClose, onClosed }) {
+  const [form, setForm] = useState({ trade_status: 'Uzatvorený', result_pips: '', result_rr: '', result_note: '' });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const set = (k, v) => setForm(f => ({...f, [k]: v}));
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true); setError('');
+    try {
+      await apiFetch(`/api/trades/${trade.id}/close`, { method: 'PATCH', body: form });
+      onClosed();
+    } catch (e) { setError(e.message); setLoading(false); }
+  };
+
+  return (
+    <div className="modal-bg" onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div className="modal" style={{maxWidth:480}}>
+        <div className="modal-header">
+          <div className="modal-title">🏁 Uzatvoriť obchod {trade.id}</div>
+          <button className="modal-close" onClick={onClose}>×</button>
+        </div>
+        {error && <div className="alert alert-error">{error}</div>}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group" style={{marginBottom:14}}>
+            <label>Stav uzatvorenia</label>
+            <select value={form.trade_status} onChange={e => set('trade_status', e.target.value)}>
+              <option value="Uzatvorený">✅ Uzatvorený (vykonaný)</option>
+              <option value="Zrušený">⛔ Zrušený (nevykonaný)</option>
+            </select>
+          </div>
+          {form.trade_status === 'Uzatvorený' && (
+            <>
+              <div className="form-grid" style={{marginBottom:14}}>
+                <div className="form-group">
+                  <label>Výsledok (pips)</label>
+                  <input type="number" step="any" value={form.result_pips} onChange={e => set('result_pips', e.target.value)}
+                    placeholder="+50 alebo -20"/>
+                </div>
+                <div className="form-group">
+                  <label>R násobok</label>
+                  <input type="number" step="any" value={form.result_rr} onChange={e => set('result_rr', e.target.value)}
+                    placeholder="+2.5 alebo -1"/>
+                </div>
+              </div>
+              <div className="form-group" style={{marginBottom:16}}>
+                <label>Poznámka k výsledku</label>
+                <textarea value={form.result_note} onChange={e => set('result_note', e.target.value)}
+                  placeholder="Čo sa stalo, prečo vyšiel alebo nevyšiel..." rows={3}/>
+              </div>
+            </>
+          )}
+          <div style={{display:'flex', gap:10}}>
+            <button type="submit" className="btn btn-primary" disabled={loading}>
+              {loading ? <><div className="spinner" style={{width:16,height:16}}/> Ukladám...</> : '✓ Potvrdiť'}
+            </button>
+            <button type="button" className="btn btn-secondary" onClick={onClose}>Zrušiť</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ─── NEW TRADE FORM ───────────────────────────────────────────────────────────
+
+function NewTradeForm({ onNavigate, config, currentUser }) {
+  const traderName = currentUser?.trader_name || '';
   const [form, setForm] = useState({
-    submitted_by: config.traders[0] || '',
+    submitted_by: traderName || config.traders[0] || '',
     instrument: config.instruments[0] || '',
     timeframe: 'H1',
     direction: 'Long',
@@ -593,12 +891,24 @@ function NewTradeForm({ onNavigate, config }) {
     htf_confirmed: 'Áno',
     entry_type: 'Limit',
     idea_description: '',
+    entry_price: '', stop_loss: '', take_profit: '',
     condition1: '', condition2: '', condition3: '', condition4: '',
   });
+  const [imageFile, setImageFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const fileInputRef = useRef();
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
+  const set = (k, v) => setForm(f => ({...f, [k]: v}));
+
+  const handleImageSelect = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImageFile(file);
+    const base64 = await resizeImageToBase64(file);
+    setImagePreview(base64);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -606,9 +916,20 @@ function NewTradeForm({ onNavigate, config }) {
     setLoading(true); setError('');
     try {
       const { id } = await apiFetch('/api/trades', { method: 'POST', body: form });
+      // Upload image if selected
+      if (imagePreview) {
+        await apiFetch(`/api/trades/${id}/image`, { method: 'POST', body: { image_data: imagePreview } });
+      }
       onNavigate('trade-detail', id);
     } catch (e) { setError(e.message); setLoading(false); }
   };
+
+  // Calculate RRR preview
+  let rrrPreview = null;
+  const entry = parseFloat(form.entry_price), sl = parseFloat(form.stop_loss), tp = parseFloat(form.take_profit);
+  if (!isNaN(entry) && !isNaN(sl) && !isNaN(tp) && Math.abs(entry - sl) > 0) {
+    rrrPreview = (Math.abs(tp - entry) / Math.abs(entry - sl)).toFixed(2);
+  }
 
   const tfs = ['M5','M15','M30','H1','H4','D1','W1'];
 
@@ -623,9 +944,13 @@ function NewTradeForm({ onNavigate, config }) {
           <div className="form-grid">
             <div className="form-group">
               <label>Zadávateľ *</label>
-              <select value={form.submitted_by} onChange={e => set('submitted_by', e.target.value)} required>
-                {config.traders.map(t => <option key={t}>{t}</option>)}
-              </select>
+              {traderName ? (
+                <input value={traderName} readOnly/>
+              ) : (
+                <select value={form.submitted_by} onChange={e => set('submitted_by', e.target.value)} required>
+                  {config.traders.map(t => <option key={t}>{t}</option>)}
+                </select>
+              )}
             </div>
             <div className="form-group">
               <label>Instrument *</label>
@@ -642,38 +967,88 @@ function NewTradeForm({ onNavigate, config }) {
             <div className="form-group">
               <label>Smer *</label>
               <select value={form.direction} onChange={e => set('direction', e.target.value)}>
-                <option>Long</option>
-                <option>Short</option>
+                <option>Long</option><option>Short</option>
               </select>
             </div>
             <div className="form-group">
               <label>Kontext trendu *</label>
               <select value={form.trend_context} onChange={e => set('trend_context', e.target.value)}>
-                <option>Do trendu</option>
-                <option>Proti trendu</option>
+                <option>Do trendu</option><option>Proti trendu</option>
               </select>
             </div>
             <div className="form-group">
               <label>HTF potvrdenie?</label>
               <select value={form.htf_confirmed} onChange={e => set('htf_confirmed', e.target.value)}>
-                <option>Áno</option>
-                <option>Nie</option>
+                <option>Áno</option><option>Nie</option>
               </select>
             </div>
             <div className="form-group">
               <label>Typ vstupu</label>
               <select value={form.entry_type} onChange={e => set('entry_type', e.target.value)}>
-                <option>Limit</option>
-                <option>Market</option>
+                <option>Limit</option><option>Market</option>
               </select>
             </div>
             <div className="form-group full">
               <label>Základná myšlienka / setup *</label>
-              <textarea value={form.idea_description} onChange={e => set('idea_description', e.target.value)} placeholder="Popíš setup, prečo vstupuješ, čo očakávaš..." required rows={4}/>
+              <textarea value={form.idea_description} onChange={e => set('idea_description', e.target.value)}
+                placeholder="Popíš setup, prečo vstupuješ, čo očakávaš..." required rows={4}/>
             </div>
           </div>
         </div>
 
+        {/* Entry / SL / TP */}
+        <div className="card" style={{marginBottom:16}}>
+          <div className="section-title">Plánované hodnoty (voliteľné)</div>
+          <div className="form-grid form-grid-3">
+            <div className="form-group">
+              <label>Entry</label>
+              <input type="number" step="any" value={form.entry_price} onChange={e => set('entry_price', e.target.value)} placeholder="napr. 1.0850"/>
+            </div>
+            <div className="form-group">
+              <label>Stop Loss</label>
+              <input type="number" step="any" value={form.stop_loss} onChange={e => set('stop_loss', e.target.value)} placeholder="napr. 1.0820"/>
+            </div>
+            <div className="form-group">
+              <label>Take Profit</label>
+              <input type="number" step="any" value={form.take_profit} onChange={e => set('take_profit', e.target.value)} placeholder="napr. 1.0910"/>
+            </div>
+          </div>
+          {rrrPreview && (
+            <div style={{marginTop:10, padding:'8px 14px', background:'var(--bg3)', borderRadius:7, display:'inline-flex', alignItems:'center', gap:8}}>
+              <span style={{fontSize:'0.78rem', color:'var(--text2)'}}>RRR:</span>
+              <strong style={{color: parseFloat(rrrPreview) >= (config.parameters?.min_rrr || 1.5) ? 'var(--green)' : 'var(--red)'}}>
+                {rrrPreview} {parseFloat(rrrPreview) >= (config.parameters?.min_rrr || 1.5) ? '✅' : '⚠️'}
+              </strong>
+            </div>
+          )}
+        </div>
+
+        {/* Image upload */}
+        <div className="card" style={{marginBottom:16}}>
+          <div className="section-title">📸 TradingView screenshot (voliteľné)</div>
+          <input type="file" accept="image/*" ref={fileInputRef} style={{display:'none'}} onChange={handleImageSelect}/>
+          <div className={`img-upload-box ${imagePreview ? 'has-img' : ''}`}
+            onClick={() => !imagePreview && fileInputRef.current?.click()}>
+            {imagePreview ? (
+              <div style={{position:'relative'}}>
+                <img src={imagePreview} alt="preview"/>
+                <button type="button" onClick={e => { e.stopPropagation(); setImagePreview(null); setImageFile(null); }}
+                  style={{position:'absolute', top:8, right:8, background:'rgba(0,0,0,0.7)', border:'none', color:'#fff',
+                    borderRadius:'50%', width:28, height:28, cursor:'pointer', fontSize:'1rem', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                  ×
+                </button>
+              </div>
+            ) : (
+              <div style={{color:'var(--text2)'}}>
+                <div style={{fontSize:'2rem', marginBottom:8}}>📷</div>
+                <div style={{fontSize:'0.875rem', marginBottom:4}}>Klikni pre nahratie screenshotu</div>
+                <div style={{fontSize:'0.75rem'}}>PNG, JPG – automaticky komprimované</div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Conditions */}
         <div className="card" style={{marginBottom:20}}>
           <div className="section-title">Spoločné podmienky tímu (voliteľné)</div>
           <div className="form-grid">
@@ -697,37 +1072,29 @@ function NewTradeForm({ onNavigate, config }) {
   );
 }
 
-// ─── REVIEW FORM (MODAL) ─────────────────────────────────────────────────────
+// ─── REVIEW MODAL ─────────────────────────────────────────────────────────────
 
-function ReviewModal({ trade, config, onClose, onSubmitted }) {
+function ReviewModal({ trade, config, onClose, onSubmitted, currentUser }) {
+  const traderName = currentUser?.trader_name || '';
   const [form, setForm] = useState({
-    reviewer: config.traders[0] || '',
-    proposed_entry: '',
-    proposed_sl: '',
-    proposed_tp: '',
-    fixed_plan: 'Áno',
-    proposed_risk_pct: '',
+    reviewer: traderName || config.traders[0] || '',
+    proposed_entry: '', proposed_sl: '', proposed_tp: '',
+    fixed_plan: 'Áno', proposed_risk_pct: '',
     custom_condition1: '', custom_condition1_met: 'Áno',
     custom_condition2: '', custom_condition2_met: 'Áno',
     custom_condition3: '', custom_condition3_met: 'Áno',
-    comment: '',
-    verdict: 'Schválené',
+    comment: '', verdict: 'Schválené',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const set = (k, v) => setForm(f => ({...f, [k]: v}));
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-
-  // Check if trader already reviewed
   const existingReview = trade.reviews?.find(r => r.reviewer === form.reviewer);
 
-  // Calculate RRR preview
   let rrrPreview = null;
-  if (form.proposed_entry && form.proposed_sl && form.proposed_tp) {
-    const e = parseFloat(form.proposed_entry), sl = parseFloat(form.proposed_sl), tp = parseFloat(form.proposed_tp);
-    if (!isNaN(e) && !isNaN(sl) && !isNaN(tp) && Math.abs(e-sl) > 0) {
-      rrrPreview = (Math.abs(tp-e) / Math.abs(e-sl)).toFixed(2);
-    }
+  const e = parseFloat(form.proposed_entry), sl = parseFloat(form.proposed_sl), tp = parseFloat(form.proposed_tp);
+  if (!isNaN(e) && !isNaN(sl) && !isNaN(tp) && Math.abs(e-sl) > 0) {
+    rrrPreview = (Math.abs(tp-e) / Math.abs(e-sl)).toFixed(2);
   }
 
   const handleSubmit = async (ev) => {
@@ -735,8 +1102,7 @@ function ReviewModal({ trade, config, onClose, onSubmitted }) {
     setLoading(true); setError('');
     try {
       await apiFetch(`/api/trades/${trade.id}/reviews`, { method: 'POST', body: form });
-      onSubmitted();
-      onClose();
+      onSubmitted(); onClose();
     } catch (e) { setError(e.message); setLoading(false); }
   };
 
@@ -752,18 +1118,21 @@ function ReviewModal({ trade, config, onClose, onSubmitted }) {
 
         {existingReview && (
           <div className="alert alert-info" style={{marginBottom:14}}>
-            ℹ️ {form.reviewer} už hodnotil tento obchod (verdikt: {existingReview.verdict}). Odoslaním prepíšeš predchádzajúce hodnotenie.
+            ℹ️ {form.reviewer} už hodnotil (verdikt: {existingReview.verdict}). Odoslaním prepíšeš predchádzajúce hodnotenie.
           </div>
         )}
-
         {error && <div className="alert alert-error">{error}</div>}
 
         <form onSubmit={handleSubmit}>
           <div className="form-group" style={{marginBottom:14}}>
             <label>Hodnotiteľ *</label>
-            <select value={form.reviewer} onChange={e => set('reviewer', e.target.value)}>
-              {config.traders.map(t => <option key={t}>{t}</option>)}
-            </select>
+            {traderName ? (
+              <input value={traderName} readOnly/>
+            ) : (
+              <select value={form.reviewer} onChange={e => set('reviewer', e.target.value)}>
+                {config.traders.map(t => <option key={t}>{t}</option>)}
+              </select>
+            )}
           </div>
 
           <div className="section-title">Navrhované hodnoty</div>
@@ -782,19 +1151,20 @@ function ReviewModal({ trade, config, onClose, onSubmitted }) {
             </div>
             <div className="form-group">
               <label>Risk % z účtu</label>
-              <input type="number" step="any" value={form.proposed_risk_pct} onChange={e => set('proposed_risk_pct', e.target.value)} placeholder={`max ${trade.trend_context === 'Do trendu' ? params.max_risk_trend : params.max_risk_counter}%`}/>
+              <input type="number" step="any" value={form.proposed_risk_pct} onChange={e => set('proposed_risk_pct', e.target.value)}
+                placeholder={`max ${trade.trend_context === 'Do trendu' ? params.max_risk_trend : params.max_risk_counter}%`}/>
             </div>
             <div className="form-group">
-              <label>Fixný plán (entry/SL/TP)?</label>
+              <label>Fixný plán?</label>
               <select value={form.fixed_plan} onChange={e => set('fixed_plan', e.target.value)}>
-                <option>Áno</option>
-                <option>Nie</option>
+                <option>Áno</option><option>Nie</option>
               </select>
             </div>
             {rrrPreview && (
               <div className="form-group">
                 <label>RRR (vypočítané)</label>
-                <div style={{padding:'8px 12px', background:'var(--bg3)', borderRadius:7, fontWeight:700, color: parseFloat(rrrPreview) >= params.min_rrr ? 'var(--green)' : 'var(--red)'}}>
+                <div style={{padding:'8px 12px', background:'var(--bg3)', borderRadius:7, fontWeight:700,
+                  color: parseFloat(rrrPreview) >= params.min_rrr ? 'var(--green)' : 'var(--red)'}}>
                   {rrrPreview} {parseFloat(rrrPreview) >= params.min_rrr ? '✅' : '❌ < min ' + params.min_rrr}
                 </div>
               </div>
@@ -811,8 +1181,7 @@ function ReviewModal({ trade, config, onClose, onSubmitted }) {
               <div className="form-group" style={{width:100}}>
                 {n === 1 && <label>Splnená?</label>}
                 <select value={form[`custom_condition${n}_met`]} onChange={e => set(`custom_condition${n}_met`, e.target.value)}>
-                  <option>Áno</option>
-                  <option>Nie</option>
+                  <option>Áno</option><option>Nie</option>
                 </select>
               </div>
             </div>
@@ -820,7 +1189,8 @@ function ReviewModal({ trade, config, onClose, onSubmitted }) {
 
           <div className="form-group" style={{marginBottom:16, marginTop:8}}>
             <label>Komentár</label>
-            <textarea value={form.comment} onChange={e => set('comment', e.target.value)} placeholder="Tvoj pohľad na setup, podmienky vstupu, pochybnosti..."/>
+            <textarea value={form.comment} onChange={e => set('comment', e.target.value)}
+              placeholder="Tvoj pohľad na setup, podmienky vstupu, pochybnosti..."/>
           </div>
 
           <div className="form-group" style={{marginBottom:20}}>
@@ -829,13 +1199,10 @@ function ReviewModal({ trade, config, onClose, onSubmitted }) {
               {[['Schválené','var(--green)','✅'],['Na revíziu','var(--yellow)','⚠️'],['Zamietnuté','var(--red)','❌']].map(([v, color, icon]) => (
                 <div key={v} onClick={() => set('verdict', v)} style={{
                   padding:'12px', borderRadius:8, cursor:'pointer', textAlign:'center', fontWeight:600, fontSize:'0.85rem',
-                  border: `2px solid ${form.verdict === v ? color : 'var(--border)'}`,
+                  border:`2px solid ${form.verdict === v ? color : 'var(--border)'}`,
                   background: form.verdict === v ? `${color}22` : 'var(--bg3)',
-                  color: form.verdict === v ? color : 'var(--text2)',
-                  transition: 'all 0.15s'
-                }}>
-                  <div style={{fontSize:'1.3rem', marginBottom:4}}>{icon}</div>
-                  {v}
+                  color: form.verdict === v ? color : 'var(--text2)', transition:'all 0.15s'}}>
+                  <div style={{fontSize:'1.3rem', marginBottom:4}}>{icon}</div>{v}
                 </div>
               ))}
             </div>
@@ -853,14 +1220,113 @@ function ReviewModal({ trade, config, onClose, onSubmitted }) {
   );
 }
 
-// ─── SETTINGS ───────────────────────────────────────────────────────────────
+// ─── STATS PAGE ───────────────────────────────────────────────────────────────
 
-function Settings({ config, onConfigChange }) {
+function StatsPage() {
+  const [stats, setStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    apiFetch('/api/stats/traders').then(s => { setStats(s); setLoading(false); }).catch(console.error);
+  }, []);
+
+  if (loading) return <div style={{display:'flex',alignItems:'center',gap:10,padding:40}}><div className="spinner"/></div>;
+
+  // Sort by win rate (desc), then by total trades
+  const sorted = [...stats].sort((a, b) => {
+    if (a.win_rate !== null && b.win_rate !== null) return b.win_rate - a.win_rate;
+    if (a.win_rate !== null) return -1;
+    if (b.win_rate !== null) return 1;
+    return b.trades_submitted - a.trades_submitted;
+  });
+
+  const medals = ['🥇', '🥈', '🥉'];
+
+  return (
+    <div>
+      <div className="page-title" style={{marginBottom:22}}>📈 Štatistiky traderov</div>
+      <div className="stats-grid">
+        {sorted.map((s, i) => (
+          <div key={s.trader} className="card">
+            <div style={{display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:14}}>
+              <div>
+                <div style={{fontSize:'0.85rem', color:'var(--text2)'}}>{medals[i] || `#${i+1}`}</div>
+                <div style={{fontSize:'1.3rem', fontWeight:800}}>{s.trader}</div>
+              </div>
+              {s.win_rate !== null && (
+                <div style={{textAlign:'right'}}>
+                  <div style={{fontSize:'0.72rem', color:'var(--text2)'}}>WIN RATE</div>
+                  <div style={{fontSize:'1.6rem', fontWeight:800, color: s.win_rate >= 50 ? 'var(--green)' : 'var(--yellow)'}}>
+                    {s.win_rate}%
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="stat-row">
+              <span style={{color:'var(--text2)'}}>Zadané obchody</span>
+              <strong>{s.trades_submitted}</strong>
+            </div>
+            <div className="stat-row">
+              <span style={{color:'var(--text2)'}}>Uzatvorené</span>
+              <strong>{s.trades_closed}</strong>
+            </div>
+            {s.trades_closed > 0 && (
+              <>
+                <div className="stat-row">
+                  <span style={{color:'var(--text2)'}}>Ziskové / stratové</span>
+                  <strong><span style={{color:'var(--green)'}}>{s.trades_profitable}</span> / <span style={{color:'var(--red)'}}>{s.trades_closed - s.trades_profitable}</span></strong>
+                </div>
+                <div className="stat-row">
+                  <span style={{color:'var(--text2)'}}>Celkové pips</span>
+                  <strong className={s.total_pips >= 0 ? 'result-pos' : 'result-neg'}>{s.total_pips >= 0 ? '+' : ''}{s.total_pips}</strong>
+                </div>
+                {s.avg_rr_closed && (
+                  <div className="stat-row">
+                    <span style={{color:'var(--text2)'}}>Priem. R výsledok</span>
+                    <strong className={s.avg_rr_closed >= 0 ? 'result-pos' : 'result-neg'}>{s.avg_rr_closed >= 0 ? '+' : ''}{s.avg_rr_closed}R</strong>
+                  </div>
+                )}
+              </>
+            )}
+            <div className="stat-row">
+              <span style={{color:'var(--text2)'}}>Hodnotenia</span>
+              <strong>{s.reviews_given}</strong>
+            </div>
+            {s.avg_rrr_proposed && (
+              <div className="stat-row">
+                <span style={{color:'var(--text2)'}}>Priem. navrhnuté RRR</span>
+                <strong style={{color: s.avg_rrr_proposed >= 1.5 ? 'var(--green)' : 'var(--yellow)'}}>{s.avg_rrr_proposed}</strong>
+              </div>
+            )}
+            {s.trades_closed === 0 && s.trades_submitted === 0 && (
+              <div style={{textAlign:'center', padding:'14px 0', color:'var(--text2)', fontSize:'0.82rem'}}>Zatiaľ žiadne obchody</div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+
+function Settings({ config, onConfigChange, currentUser }) {
+  const isAdmin = currentUser?.role === 'admin';
   const [newTrader, setNewTrader] = useState('');
   const [newInstrument, setNewInstrument] = useState('');
   const [params, setParams] = useState(config.parameters);
   const [saved, setSaved] = useState('');
   const [error, setError] = useState('');
+
+  // User management (admin)
+  const [users, setUsers] = useState([]);
+  const [newUser, setNewUser] = useState({ username: '', password: '', role: 'trader', trader_name: '' });
+  const [pwdChange, setPwdChange] = useState({ userId: null, password: '' });
+  const [userMsg, setUserMsg] = useState('');
+
+  useEffect(() => {
+    if (isAdmin) apiFetch('/api/users').then(setUsers).catch(console.error);
+  }, [isAdmin]);
 
   const addTrader = async () => {
     if (!newTrader.trim()) return;
@@ -887,98 +1353,279 @@ function Settings({ config, onConfigChange }) {
     } catch (e) { setError(e.message); }
   };
 
+  const createUser = async () => {
+    if (!newUser.username || !newUser.password) { setUserMsg('Meno a heslo sú povinné'); return; }
+    try {
+      await apiFetch('/api/users', { method: 'POST', body: newUser });
+      setNewUser({ username: '', password: '', role: 'trader', trader_name: '' });
+      const updated = await apiFetch('/api/users');
+      setUsers(updated);
+      setUserMsg('Používateľ vytvorený!'); setTimeout(() => setUserMsg(''), 3000);
+    } catch (e) { setUserMsg(e.message); }
+  };
+
+  const deleteUser = async (id, username) => {
+    if (!confirm(`Vymazať používateľa "${username}"?`)) return;
+    await apiFetch(`/api/users/${id}`, { method: 'DELETE' });
+    setUsers(users.filter(u => u.id !== id));
+  };
+
+  const changePassword = async (userId) => {
+    if (pwdChange.password.length < 6) { setUserMsg('Heslo musí mať aspoň 6 znakov'); return; }
+    try {
+      await apiFetch(`/api/users/${userId}/password`, { method: 'PUT', body: { password: pwdChange.password } });
+      setPwdChange({ userId: null, password: '' });
+      setUserMsg('Heslo zmenené!'); setTimeout(() => setUserMsg(''), 3000);
+    } catch (e) { setUserMsg(e.message); }
+  };
+
   return (
     <div>
       <div className="page-title" style={{marginBottom:22}}>⚙️ Nastavenia</div>
       {saved && <div className="alert alert-success">{saved}</div>}
       {error && <div className="alert alert-error">{error}</div>}
 
-      <div className="card settings-section">
-        <div className="section-title">Členovia tímu</div>
-        <div className="tag-list">
-          {config.traders.map(t => (
-            <div key={t} className="tag">
-              👤 {t}
-              <span className="tag-remove" onClick={() => removeTrader(t)}>×</span>
+      {isAdmin && (
+        <>
+          <div className="card settings-section">
+            <div className="section-title">Členovia tímu</div>
+            <div className="tag-list">
+              {config.traders.map(t => (
+                <div key={t} className="tag">👤 {t}
+                  <span className="tag-remove" onClick={() => removeTrader(t)}>×</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div style={{display:'flex', gap:8, marginTop:12}}>
-          <input value={newTrader} onChange={e => setNewTrader(e.target.value)} placeholder="Meno nového tradera" style={{maxWidth:220}} onKeyDown={e => e.key==='Enter' && addTrader()}/>
-          <button className="btn btn-secondary btn-sm" onClick={addTrader}>+ Pridať</button>
-        </div>
-      </div>
+            <div style={{display:'flex', gap:8, marginTop:12}}>
+              <input value={newTrader} onChange={e => setNewTrader(e.target.value)} placeholder="Meno nového tradera"
+                style={{maxWidth:220}} onKeyDown={e => e.key==='Enter' && addTrader()}/>
+              <button className="btn btn-secondary btn-sm" onClick={addTrader}>+ Pridať</button>
+            </div>
+          </div>
 
-      <div className="card settings-section">
-        <div className="section-title">Instrumenty</div>
-        <div className="tag-list">
-          {config.instruments.map(i => (
-            <div key={i} className="tag">
-              📈 {i}
-              <span className="tag-remove" onClick={() => removeInstrument(i)}>×</span>
+          <div className="card settings-section">
+            <div className="section-title">Instrumenty</div>
+            <div className="tag-list">
+              {config.instruments.map(i => (
+                <div key={i} className="tag">📈 {i}
+                  <span className="tag-remove" onClick={() => removeInstrument(i)}>×</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <div style={{display:'flex', gap:8, marginTop:12}}>
-          <input value={newInstrument} onChange={e => setNewInstrument(e.target.value)} placeholder="Napr. EUR/GBP" style={{maxWidth:220}} onKeyDown={e => e.key==='Enter' && addInstrument()}/>
-          <button className="btn btn-secondary btn-sm" onClick={addInstrument}>+ Pridať</button>
-        </div>
-      </div>
+            <div style={{display:'flex', gap:8, marginTop:12}}>
+              <input value={newInstrument} onChange={e => setNewInstrument(e.target.value)} placeholder="Napr. EUR/GBP"
+                style={{maxWidth:220}} onKeyDown={e => e.key==='Enter' && addInstrument()}/>
+              <button className="btn btn-secondary btn-sm" onClick={addInstrument}>+ Pridať</button>
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="card settings-section">
         <div className="section-title">Parametre rizika</div>
         <div className="form-grid form-grid-3" style={{maxWidth:480}}>
           <div className="form-group">
             <label>Min. RRR</label>
-            <input type="number" step="0.1" value={params.min_rrr} onChange={e => setParams(p => ({...p, min_rrr: e.target.value}))}/>
+            <input type="number" step="0.1" value={params.min_rrr} onChange={e => setParams(p => ({...p, min_rrr: e.target.value}))}
+              readOnly={!isAdmin}/>
           </div>
           <div className="form-group">
             <label>Max risk do trendu (%)</label>
-            <input type="number" step="0.1" value={params.max_risk_trend} onChange={e => setParams(p => ({...p, max_risk_trend: e.target.value}))}/>
+            <input type="number" step="0.1" value={params.max_risk_trend} onChange={e => setParams(p => ({...p, max_risk_trend: e.target.value}))}
+              readOnly={!isAdmin}/>
           </div>
           <div className="form-group">
             <label>Max risk proti trendu (%)</label>
-            <input type="number" step="0.1" value={params.max_risk_counter} onChange={e => setParams(p => ({...p, max_risk_counter: e.target.value}))}/>
+            <input type="number" step="0.1" value={params.max_risk_counter} onChange={e => setParams(p => ({...p, max_risk_counter: e.target.value}))}
+              readOnly={!isAdmin}/>
           </div>
         </div>
-        <div style={{marginTop:14}}>
-          <button className="btn btn-primary" onClick={saveParams}>💾 Uložiť parametre</button>
-        </div>
+        {isAdmin && (
+          <div style={{marginTop:14}}>
+            <button className="btn btn-primary" onClick={saveParams}>💾 Uložiť parametre</button>
+          </div>
+        )}
         <div style={{marginTop:12, fontSize:'0.8rem', color:'var(--text2)', lineHeight:1.6}}>
           <strong>Logika verdiktu:</strong><br/>
           ✅ <strong>Obchodovať</strong> — aspoň 2 schválenia<br/>
           ⚠️ <strong>Na potvrdenie</strong> — aspoň 1 schválenie + 1 revízia, žiadne zamietnutie<br/>
-          ❌ <strong>Neobchodovať</strong> — tím sa nezhodol alebo prevládol nesúhlas
+          ❌ <strong>Neobchodovať</strong> — tím sa nezhodol
         </div>
       </div>
+
+      {/* Zmena vlastného hesla */}
+      <div className="card settings-section">
+        <div className="section-title">Zmena hesla</div>
+        <ChangePasswordForm currentUser={currentUser} />
+      </div>
+
+      {/* Admin: User management */}
+      {isAdmin && (
+        <div className="card settings-section">
+          <div className="section-title">Správa používateľov</div>
+          {userMsg && <div className={`alert ${userMsg.includes('vytvor') || userMsg.includes('zmen') ? 'alert-success' : 'alert-error'}`}>{userMsg}</div>}
+
+          <table className="user-table" style={{marginBottom:20}}>
+            <thead>
+              <tr>
+                <th>Meno</th><th>Trader</th><th>Rola</th><th>Vytvorený</th><th>Akcie</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map(u => (
+                <tr key={u.id}>
+                  <td><strong>{u.username}</strong></td>
+                  <td>{u.trader_name || <span style={{color:'var(--text2)'}}>—</span>}</td>
+                  <td><span className={`badge ${u.role === 'admin' ? 'badge-yellow' : 'badge-blue'}`}>{u.role}</span></td>
+                  <td style={{color:'var(--text2)'}}>{u.created_at}</td>
+                  <td>
+                    <div style={{display:'flex', gap:6, flexWrap:'wrap'}}>
+                      {pwdChange.userId === u.id ? (
+                        <>
+                          <input type="password" value={pwdChange.password} onChange={e => setPwdChange(p => ({...p, password: e.target.value}))}
+                            placeholder="Nové heslo" style={{width:130, padding:'4px 8px', fontSize:'0.8rem'}}/>
+                          <button className="btn btn-primary btn-sm" onClick={() => changePassword(u.id)}>✓</button>
+                          <button className="btn btn-secondary btn-sm" onClick={() => setPwdChange({userId:null,password:''})}>×</button>
+                        </>
+                      ) : (
+                        <>
+                          <button className="btn btn-secondary btn-sm" onClick={() => setPwdChange({userId:u.id, password:''})}>🔑 Heslo</button>
+                          {u.username !== 'admin' && (
+                            <button className="btn btn-danger btn-sm" onClick={() => deleteUser(u.id, u.username)}>🗑</button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          <div style={{borderTop:'1px solid var(--border)', paddingTop:16}}>
+            <div style={{fontSize:'0.85rem', fontWeight:600, marginBottom:12}}>Pridať nového používateľa</div>
+            <div className="form-grid" style={{marginBottom:10}}>
+              <div className="form-group">
+                <label>Prihlasovacie meno</label>
+                <input value={newUser.username} onChange={e => setNewUser(u => ({...u, username: e.target.value}))} placeholder="napr. novak"/>
+              </div>
+              <div className="form-group">
+                <label>Heslo</label>
+                <input type="password" value={newUser.password} onChange={e => setNewUser(u => ({...u, password: e.target.value}))} placeholder="min. 6 znakov"/>
+              </div>
+              <div className="form-group">
+                <label>Rola</label>
+                <select value={newUser.role} onChange={e => setNewUser(u => ({...u, role: e.target.value}))}>
+                  <option value="trader">trader</option>
+                  <option value="admin">admin</option>
+                </select>
+              </div>
+              <div className="form-group">
+                <label>Trader (meno v tíme)</label>
+                <select value={newUser.trader_name} onChange={e => setNewUser(u => ({...u, trader_name: e.target.value}))}>
+                  <option value="">— žiadny —</option>
+                  {config.traders.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+              </div>
+            </div>
+            <button className="btn btn-primary btn-sm" onClick={createUser}>+ Vytvoriť účet</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── APP ROOT ────────────────────────────────────────────────────────────────
+function ChangePasswordForm({ currentUser }) {
+  const [form, setForm] = useState({ password: '', confirm: '' });
+  const [msg, setMsg] = useState('');
+  const [err, setErr] = useState('');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (form.password !== form.confirm) { setErr('Heslá sa nezhodujú'); return; }
+    if (form.password.length < 6) { setErr('Heslo musí mať aspoň 6 znakov'); return; }
+    setErr('');
+    try {
+      await apiFetch(`/api/users/${currentUser.id}/password`, { method: 'PUT', body: { password: form.password } });
+      setForm({ password: '', confirm: '' });
+      setMsg('Heslo zmenené!'); setTimeout(() => setMsg(''), 3000);
+    } catch (e) { setErr(e.message); }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      {msg && <div className="alert alert-success">{msg}</div>}
+      {err && <div className="alert alert-error">{err}</div>}
+      <div className="form-grid" style={{maxWidth:400}}>
+        <div className="form-group">
+          <label>Nové heslo</label>
+          <input type="password" value={form.password} onChange={e => setForm(f => ({...f, password: e.target.value}))} placeholder="min. 6 znakov"/>
+        </div>
+        <div className="form-group">
+          <label>Potvrdiť heslo</label>
+          <input type="password" value={form.confirm} onChange={e => setForm(f => ({...f, confirm: e.target.value}))} placeholder="zopakuj heslo"/>
+        </div>
+      </div>
+      <button type="submit" className="btn btn-secondary btn-sm" style={{marginTop:10}}>🔑 Zmeniť heslo</button>
+    </form>
+  );
+}
+
+// ─── APP ROOT ──────────────────────────────────────────────────────────────────
 
 function App() {
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authChecked, setAuthChecked] = useState(false);
   const [page, setPage] = useState('dashboard');
   const [pageParam, setPageParam] = useState(null);
   const [config, setConfig] = useState(null);
   const [reviewTrade, setReviewTrade] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
+  // Check existing session on mount
+  useEffect(() => {
+    const token = getToken();
+    if (!token) { setAuthChecked(true); return; }
+    apiFetch('/api/auth/me')
+      .then(({ user }) => { setCurrentUser(user); setAuthChecked(true); })
+      .catch(() => { clearToken(); setAuthChecked(true); });
+  }, []);
+
   const loadConfig = useCallback(() => {
     apiFetch('/api/config').then(setConfig).catch(console.error);
   }, []);
 
-  useEffect(() => { loadConfig(); }, [loadConfig]);
+  useEffect(() => {
+    if (currentUser) loadConfig();
+  }, [currentUser, loadConfig]);
+
+  const handleLogin = (user) => { setCurrentUser(user); };
+
+  const handleLogout = async () => {
+    try { await apiFetch('/api/auth/logout', { method: 'POST' }); } catch {}
+    clearToken();
+    setCurrentUser(null);
+    setConfig(null);
+    setPage('dashboard');
+  };
 
   const navigate = (p, param = null) => { setPage(p); setPageParam(param); };
-
   const handleReview = (trade) => setReviewTrade(trade);
   const handleReviewSubmitted = () => setRefreshKey(k => k+1);
 
-  if (!config) return (
-    <div style={{display:'flex', alignItems:'center', justifyContent:'center', height:'100vh', gap:12}}>
+  if (!authChecked) return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',gap:12}}>
       <div className="spinner" style={{width:28,height:28}}/>
-      <span style={{color:'var(--text2)'}}>Pripájam sa k serveru...</span>
+    </div>
+  );
+
+  if (!currentUser) return <LoginPage onLogin={handleLogin} />;
+
+  if (!config) return (
+    <div style={{display:'flex',alignItems:'center',justifyContent:'center',height:'100vh',gap:12}}>
+      <div className="spinner" style={{width:28,height:28}}/>
+      <span style={{color:'var(--text2)'}}>Načítavam konfiguráciu...</span>
     </div>
   );
 
@@ -986,8 +1633,11 @@ function App() {
     { id: 'dashboard', icon: '📊', label: 'Dashboard' },
     { id: 'trades', icon: '💼', label: 'Obchody' },
     { id: 'new-trade', icon: '➕', label: 'Nový obchod' },
+    { id: 'stats', icon: '📈', label: 'Štatistiky' },
     { id: 'settings', icon: '⚙️', label: 'Nastavenia' },
   ];
+
+  const initials = (currentUser.trader_name || currentUser.username || '?').slice(0, 2).toUpperCase();
 
   return (
     <div className="layout">
@@ -998,29 +1648,44 @@ function App() {
         </div>
         <nav className="nav">
           {navItems.map(n => (
-            <div key={n.id} className={`nav-item ${page === n.id && !pageParam ? 'active' : ''}`} onClick={() => navigate(n.id)}>
+            <div key={n.id} className={`nav-item ${page === n.id && !pageParam ? 'active' : ''}`}
+              onClick={() => navigate(n.id)}>
               <span className="nav-icon">{n.icon}</span>
               <span>{n.label}</span>
             </div>
           ))}
         </nav>
-        <div style={{padding:'12px 20px', borderTop:'1px solid var(--border)', fontSize:'0.72rem', color:'var(--text2)'}}>
-          👥 {config.traders.join(', ')}
+        <div className="user-panel">
+          <div className="user-info">
+            <div className="user-avatar">{initials}</div>
+            <div>
+              <div className="user-name">{currentUser.trader_name || currentUser.username}</div>
+              <div className="user-role">{currentUser.role === 'admin' ? '👑 admin' : '👤 trader'}</div>
+            </div>
+          </div>
+          <button className="btn btn-secondary btn-sm" style={{width:'100%', justifyContent:'center'}} onClick={handleLogout}>
+            🚪 Odhlásiť sa
+          </button>
         </div>
       </div>
 
       <div className="main">
         {page === 'dashboard' && <Dashboard onNavigate={navigate} key={refreshKey} />}
         {page === 'trades' && <TradesList onNavigate={navigate} key={refreshKey} />}
-        {page === 'new-trade' && <NewTradeForm onNavigate={navigate} config={config} />}
-        {page === 'trade-detail' && <TradeDetail tradeId={pageParam} onNavigate={navigate} onReview={handleReview} key={`${pageParam}-${refreshKey}`} />}
-        {page === 'settings' && <Settings config={config} onConfigChange={loadConfig} />}
+        {page === 'new-trade' && <NewTradeForm onNavigate={navigate} config={config} currentUser={currentUser} />}
+        {page === 'trade-detail' && (
+          <TradeDetail tradeId={pageParam} onNavigate={navigate} onReview={handleReview}
+            currentUser={currentUser} key={`${pageParam}-${refreshKey}`} />
+        )}
+        {page === 'stats' && <StatsPage key={refreshKey} />}
+        {page === 'settings' && <Settings config={config} onConfigChange={loadConfig} currentUser={currentUser} />}
       </div>
 
       {reviewTrade && (
         <ReviewModal
           trade={reviewTrade}
           config={config}
+          currentUser={currentUser}
           onClose={() => setReviewTrade(null)}
           onSubmitted={handleReviewSubmitted}
         />
