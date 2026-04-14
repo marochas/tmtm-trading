@@ -1,0 +1,14 @@
+# Databáza – NIKDY nekommituj, inak sa dáta prepíšu pri deploy!
+*.db
+*.db-wal
+*.db-shm
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# OS
+.DS_Store
+Thumbs.db
