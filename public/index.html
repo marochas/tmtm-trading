@@ -10,48 +10,61 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0f1117; --bg2: #1a1d27; --bg3: #22263a; --border: #2e3250;
-      --accent: #4f8ef7; --accent2: #6c63ff;
+      --bg: #0a0c14; --bg2: #111422; --bg3: #1a1e30; --border: #252a42;
+      --accent: #4f8ef7; --accent2: #6c63ff; --accent-glow: rgba(79,142,247,0.2);
       --green: #22c55e; --yellow: #f59e0b; --red: #ef4444;
-      --text: #e2e8f0; --text2: #94a3b8; --radius: 10px;
+      --text: #e2e8f0; --text2: #8896b3; --radius: 10px;
     }
     body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; min-height: 100vh; }
     #root { min-height: 100vh; }
 
     /* Layout */
     .layout { display: flex; min-height: 100vh; }
-    .sidebar { width: 230px; min-height: 100vh; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; }
-    .main { margin-left: 230px; flex: 1; padding: 28px 32px; }
-    .logo { padding: 22px 20px 18px; border-bottom: 1px solid var(--border); }
-    .logo h1 { font-size: 1.25rem; font-weight: 700; color: var(--accent); letter-spacing: -0.3px; }
+    .sidebar { width: 230px; min-height: 100vh; background: var(--bg2); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; left: 0; top: 0; bottom: 0; z-index: 100; box-shadow: 2px 0 20px rgba(0,0,0,0.4); }
+    .main { margin-left: 230px; flex: 1; padding: 28px 32px; background: var(--bg); }
+    .logo { padding: 22px 20px 18px; border-bottom: 1px solid var(--border); background: linear-gradient(135deg, var(--bg2), var(--bg3)); }
+    .logo h1 { font-size: 1.25rem; font-weight: 800; color: var(--accent); letter-spacing: -0.3px; text-shadow: 0 0 20px var(--accent-glow); }
     .logo p { font-size: 0.72rem; color: var(--text2); margin-top: 2px; }
     .nav { padding: 12px 0; flex: 1; overflow-y: auto; }
-    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer; color: var(--text2); font-size: 0.9rem; border-left: 3px solid transparent; transition: all 0.15s; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 20px; cursor: pointer; color: var(--text2); font-size: 0.9rem; border-left: 3px solid transparent; transition: all 0.15s; border-radius: 0; }
     .nav-item:hover { background: var(--bg3); color: var(--text); }
-    .nav-item.active { color: var(--accent); background: rgba(79,142,247,0.1); border-left-color: var(--accent); }
+    .nav-item.active { color: var(--accent); background: var(--accent-glow); border-left-color: var(--accent); }
     .nav-icon { font-size: 1.1rem; width: 22px; text-align: center; }
-    .user-panel { padding: 12px 14px; border-top: 1px solid var(--border); }
+    .user-panel { padding: 12px 14px; border-top: 1px solid var(--border); background: linear-gradient(to top, rgba(0,0,0,0.2), transparent); }
     .user-info { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-    .user-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: #fff; flex-shrink: 0; }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; color: #fff; flex-shrink: 0; box-shadow: 0 2px 8px var(--accent-glow); }
     .user-name { font-size: 0.82rem; font-weight: 600; }
     .user-role { font-size: 0.68rem; color: var(--text2); }
+    .notif-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; border-bottom: 1px solid var(--border); }
+    .notif-btn { position: relative; background: none; border: none; cursor: pointer; padding: 6px 8px; color: var(--text2); font-size: 1.15rem; transition: color 0.15s; border-radius: 8px; }
+    .notif-btn:hover { color: var(--text); background: var(--bg3); }
+    .notif-badge { position: absolute; top: 1px; right: 1px; background: var(--red); color: #fff; border-radius: 50%; width: 15px; height: 15px; font-size: 0.6rem; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+    .notif-panel { position: fixed; left: 240px; bottom: 80px; width: 340px; background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; box-shadow: 0 16px 48px rgba(0,0,0,0.6); z-index: 400; max-height: 420px; overflow-y: auto; }
+    .notif-panel-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; font-weight: 600; font-size: 0.88rem; position: sticky; top: 0; background: var(--bg2); }
+    .notif-item { padding: 11px 16px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background 0.12s; }
+    .notif-item:hover { background: var(--bg3); }
+    .notif-item:last-child { border-bottom: none; }
+    .notif-item.unread { background: rgba(79,142,247,0.06); border-left: 2px solid var(--accent); padding-left: 14px; }
+    .notif-msg { font-size: 0.81rem; line-height: 1.45; color: var(--text); }
+    .notif-time { font-size: 0.7rem; color: var(--text2); margin-top: 3px; }
 
     /* Login */
-    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--bg); padding: 20px; }
-    .login-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 36px; width: 100%; max-width: 380px; }
-    .login-logo { text-align: center; margin-bottom: 28px; }
-    .login-logo h1 { font-size: 1.8rem; font-weight: 800; color: var(--accent); margin-bottom: 4px; }
+    .login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: radial-gradient(ellipse at center, #111626 0%, var(--bg) 70%); padding: 20px; }
+    .login-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 20px; padding: 40px; width: 100%; max-width: 400px; box-shadow: 0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(79,142,247,0.1); }
+    .login-logo { text-align: center; margin-bottom: 32px; }
+    .login-logo h1 { font-size: 2rem; font-weight: 800; color: var(--accent); margin-bottom: 4px; text-shadow: 0 0 30px var(--accent-glow); }
     .login-logo p { color: var(--text2); font-size: 0.875rem; }
 
     /* Cards */
-    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.25); }
     .card-sm { padding: 14px 18px; }
 
     /* KPI Grid */
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px; margin-bottom: 24px; }
-    .kpi { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .kpi { background: linear-gradient(135deg, var(--bg2) 0%, var(--bg3) 100%); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; position: relative; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.3); }
+    .kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
     .kpi-label { font-size: 0.72rem; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-    .kpi-value { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+    .kpi-value { font-size: 1.9rem; font-weight: 800; line-height: 1; }
     .kpi-sub { font-size: 0.75rem; color: var(--text2); margin-top: 4px; }
 
     /* Buttons */
@@ -84,8 +97,8 @@
 
     /* Trade cards */
     .trade-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
-    .trade-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; cursor: pointer; transition: border-color 0.15s, transform 0.1s; }
-    .trade-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+    .trade-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; cursor: pointer; transition: border-color 0.2s, transform 0.15s, box-shadow 0.2s; box-shadow: 0 2px 8px rgba(0,0,0,0.25); }
+    .trade-card:hover { border-color: var(--accent); transform: translateY(-3px); box-shadow: 0 8px 24px rgba(79,142,247,0.15); }
     .trade-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
     .trade-id { font-size: 0.75rem; color: var(--text2); font-family: monospace; }
     .trade-instrument { font-size: 1.15rem; font-weight: 700; margin-bottom: 4px; }
@@ -1087,7 +1100,26 @@ function ReviewModal({ trade, config, onClose, onSubmitted, currentUser }) {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [conditionsLoaded, setConditionsLoaded] = useState(false);
   const set = (k, v) => setForm(f => ({...f, [k]: v}));
+
+  // Load team + personal conditions and pre-populate fields
+  useEffect(() => {
+    const reviewer = traderName || config.traders[0] || '';
+    Promise.all([
+      apiFetch('/api/conditions?type=team'),
+      reviewer ? apiFetch(`/api/conditions?type=personal&trader=${encodeURIComponent(reviewer)}`) : Promise.resolve([]),
+    ]).then(([team, personal]) => {
+      const all = [...team, ...personal];
+      setForm(f => ({
+        ...f,
+        custom_condition1: all[0]?.text || f.custom_condition1,
+        custom_condition2: all[1]?.text || f.custom_condition2,
+        custom_condition3: all[2]?.text || f.custom_condition3,
+      }));
+      setConditionsLoaded(true);
+    }).catch(() => setConditionsLoaded(true));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const existingReview = trade.reviews?.find(r => r.reviewer === form.reviewer);
 
@@ -1453,6 +1485,9 @@ function Settings({ config, onConfigChange, currentUser }) {
         </div>
       </div>
 
+      {/* Podmienky */}
+      <ConditionsManager currentUser={currentUser} />
+
       {/* Zmena vlastného hesla */}
       <div className="card settings-section">
         <div className="section-title">Zmena hesla</div>
@@ -1572,6 +1607,212 @@ function ChangePasswordForm({ currentUser }) {
   );
 }
 
+// ─── NOTIFICATION BELL ────────────────────────────────────────────────────────
+
+function NotificationBell({ currentUser, onNavigate }) {
+  const [notifs, setNotifs] = useState([]);
+  const [unread, setUnread] = useState(0);
+  const [open, setOpen] = useState(false);
+  const panelRef = useRef(null);
+  const prevUnread = useRef(-1);
+
+  const fetchNotifs = useCallback(async () => {
+    if (!currentUser) return;
+    try {
+      const data = await apiFetch('/api/notifications');
+      const newUnread = data.unread || 0;
+      // Browser notification when new items arrive
+      if (prevUnread.current >= 0 && newUnread > prevUnread.current) {
+        const latest = data.notifications?.find(n => !n.read);
+        if (latest && 'Notification' in window && Notification.permission === 'granted') {
+          new Notification('TMTM Trading', { body: latest.message });
+        }
+      }
+      prevUnread.current = newUnread;
+      setNotifs(data.notifications || []);
+      setUnread(newUnread);
+    } catch {}
+  }, [currentUser]);
+
+  useEffect(() => {
+    // Request browser notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+    fetchNotifs();
+    const iv = setInterval(fetchNotifs, 30000);
+    return () => clearInterval(iv);
+  }, [fetchNotifs]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e) => {
+      if (panelRef.current && !panelRef.current.contains(e.target)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  const markRead = async () => {
+    try {
+      await apiFetch('/api/notifications/read', { method: 'POST', body: {} });
+      prevUnread.current = 0;
+      setUnread(0);
+      setNotifs(n => n.map(x => ({...x, read: 1})));
+    } catch {}
+  };
+
+  const handleToggle = () => {
+    setOpen(o => !o);
+    if (!open && unread > 0) markRead();
+  };
+
+  const typeIcon = (t) => ({ new_trade: '📊', new_review: '📋', trade_approved: '✅' }[t] || '🔔');
+
+  const formatTime = (ts) => {
+    try {
+      const diff = (Date.now() - new Date(ts)) / 1000;
+      if (diff < 60) return 'práve teraz';
+      if (diff < 3600) return Math.floor(diff/60) + ' min';
+      if (diff < 86400) return Math.floor(diff/3600) + ' hod';
+      return new Date(ts).toLocaleDateString('sk');
+    } catch { return ts || ''; }
+  };
+
+  return (
+    <div ref={panelRef} style={{position:'relative'}}>
+      <button className="notif-btn" onClick={handleToggle} title="Notifikácie">
+        🔔
+        {unread > 0 && <span className="notif-badge">{unread > 9 ? '9+' : unread}</span>}
+      </button>
+      {open && (
+        <div className="notif-panel">
+          <div className="notif-panel-header">
+            <span>🔔 Notifikácie {unread > 0 && <span className="badge badge-red" style={{marginLeft:6}}>{unread}</span>}</span>
+            {notifs.length > 0 && (
+              <button className="btn btn-secondary btn-sm" onClick={markRead}
+                style={{padding:'2px 8px', fontSize:'0.7rem'}}>Všetko prečítané</button>
+            )}
+          </div>
+          {notifs.length === 0 ? (
+            <div style={{padding:'28px 16px', textAlign:'center', color:'var(--text2)', fontSize:'0.83rem'}}>
+              Žiadne notifikácie
+            </div>
+          ) : notifs.map(n => (
+            <div key={n.id} className={`notif-item ${!n.read ? 'unread' : ''}`}
+              onClick={() => { setOpen(false); if (n.trade_id) onNavigate('trade-detail', n.trade_id); }}>
+              <div style={{display:'flex', gap:9, alignItems:'flex-start'}}>
+                <span style={{fontSize:'1.1rem', marginTop:1}}>{typeIcon(n.type)}</span>
+                <div style={{flex:1}}>
+                  <div className="notif-msg">{n.message}</div>
+                  <div className="notif-time">{formatTime(n.created_at)}</div>
+                </div>
+                {!n.read && <div style={{width:6, height:6, borderRadius:'50%', background:'var(--accent)', marginTop:5, flexShrink:0}}/>}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── CONDITIONS MANAGER ────────────────────────────────────────────────────────
+
+function ConditionsManager({ currentUser }) {
+  const isAdmin = currentUser?.role === 'admin';
+  const myName = currentUser?.trader_name || currentUser?.username || '';
+  const [teamConds, setTeamConds] = useState([]);
+  const [personalConds, setPersonalConds] = useState([]);
+  const [newTeam, setNewTeam] = useState('');
+  const [newPersonal, setNewPersonal] = useState('');
+  const [msg, setMsg] = useState('');
+
+  const load = useCallback(async () => {
+    try {
+      const [team, personal] = await Promise.all([
+        apiFetch('/api/conditions?type=team'),
+        myName ? apiFetch(`/api/conditions?type=personal&trader=${encodeURIComponent(myName)}`) : Promise.resolve([]),
+      ]);
+      setTeamConds(team);
+      setPersonalConds(personal);
+    } catch(e) { console.error(e); }
+  }, [myName]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const flash = (m) => { setMsg(m); setTimeout(() => setMsg(''), 3000); };
+
+  const addTeam = async () => {
+    if (!newTeam.trim()) return;
+    try {
+      await apiFetch('/api/conditions', { method:'POST', body:{ type:'team', text:newTeam.trim() }});
+      setNewTeam(''); await load(); flash('Podmienka pridaná!');
+    } catch(e) { flash(e.message); }
+  };
+  const addPersonal = async () => {
+    if (!newPersonal.trim()) return;
+    try {
+      await apiFetch('/api/conditions', { method:'POST', body:{ type:'personal', text:newPersonal.trim() }});
+      setNewPersonal(''); await load(); flash('Podmienka pridaná!');
+    } catch(e) { flash(e.message); }
+  };
+  const remove = async (id) => {
+    try { await apiFetch(`/api/conditions/${id}`, { method:'DELETE' }); await load(); }
+    catch(e) { flash(e.message); }
+  };
+
+  const CondList = ({ items, onRemove }) => (
+    <div style={{marginBottom:10}}>
+      {items.length === 0 ? (
+        <div style={{color:'var(--text2)', fontSize:'0.82rem', padding:'6px 0'}}>Žiadne podmienky</div>
+      ) : items.map((c, i) => (
+        <div key={c.id} style={{display:'flex', alignItems:'center', gap:8, padding:'7px 0', borderBottom:'1px solid var(--border)'}}>
+          <span style={{color:'var(--accent)', fontSize:'0.72rem', fontWeight:700, minWidth:22}}>#{i+1}</span>
+          <span style={{flex:1, fontSize:'0.875rem'}}>{c.text}</span>
+          <button className="btn btn-danger btn-sm" onClick={() => onRemove(c.id)} style={{padding:'1px 8px', fontSize:'0.8rem'}}>×</button>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <>
+      {msg && <div className="alert alert-success" style={{marginBottom:12}}>{msg}</div>}
+
+      {isAdmin && (
+        <div className="card settings-section">
+          <div className="section-title">🏆 Tímové podmienky</div>
+          <div style={{fontSize:'0.78rem', color:'var(--text2)', marginBottom:10}}>
+            Predvyplnené pri hodnotení obchodu pre každého tradera.
+          </div>
+          <CondList items={teamConds} onRemove={remove} />
+          <div style={{display:'flex', gap:8, marginTop:8}}>
+            <input value={newTeam} onChange={e => setNewTeam(e.target.value)}
+              placeholder="Napr. HTF trend potvrdený..." style={{flex:1}}
+              onKeyDown={e => e.key==='Enter' && addTeam()}/>
+            <button className="btn btn-secondary btn-sm" onClick={addTeam} style={{whiteSpace:'nowrap'}}>+ Pridať</button>
+          </div>
+        </div>
+      )}
+
+      <div className="card settings-section">
+        <div className="section-title">👤 Moje osobné podmienky</div>
+        <div style={{fontSize:'0.78rem', color:'var(--text2)', marginBottom:10}}>
+          Predvyplnené pri tvojich hodnoteniach. Uložené iba pre teba.
+        </div>
+        <CondList items={personalConds} onRemove={remove} />
+        <div style={{display:'flex', gap:8, marginTop:8}}>
+          <input value={newPersonal} onChange={e => setNewPersonal(e.target.value)}
+            placeholder="Napr. Čakám na potvrdenie 15m..." style={{flex:1}}
+            onKeyDown={e => e.key==='Enter' && addPersonal()}/>
+          <button className="btn btn-secondary btn-sm" onClick={addPersonal} style={{whiteSpace:'nowrap'}}>+ Pridať</button>
+        </div>
+      </div>
+    </>
+  );
+}
+
 // ─── APP ROOT ──────────────────────────────────────────────────────────────────
 
 function App() {
@@ -1655,6 +1896,10 @@ function App() {
             </div>
           ))}
         </nav>
+        <div className="notif-row">
+          <div style={{fontSize:'0.75rem', color:'var(--text2)', fontWeight:500}}>Notifikácie</div>
+          <NotificationBell currentUser={currentUser} onNavigate={navigate} />
+        </div>
         <div className="user-panel">
           <div className="user-info">
             <div className="user-avatar">{initials}</div>

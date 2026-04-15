@@ -168,6 +168,23 @@ def init_db():
             user_id INTEGER NOT NULL REFERENCES users(id),
             created_at TEXT NOT NULL
         )""")
+        con.execute("""CREATE TABLE IF NOT EXISTS conditions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            type TEXT NOT NULL DEFAULT 'team',
+            trader TEXT,
+            text TEXT NOT NULL,
+            position INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+        )""")
+        con.execute("""CREATE TABLE IF NOT EXISTS notifications (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            type TEXT NOT NULL,
+            message TEXT NOT NULL,
+            trade_id TEXT,
+            read INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+        )""")
 
         # Migrate existing trades table (add new columns if missing)
         migrations = [
@@ -376,6 +393,13 @@ def create_trade(data):
              data.get('condition1') or None, data.get('condition2') or None,
              data.get('condition3') or None, data.get('condition4') or None,
              entry_price, stop_loss, take_profit))
+    # Notify all users about the new trade
+    submitter_id = get_user_id_by_trader_name(data['submitted_by'])
+    notify_all_users(
+        'new_trade',
+        f"Nový obchod {tid} od {data['submitted_by']}: {data['instrument']} {data['direction']}",
+        trade_id=tid,
+        exclude_user_id=submitter_id)
     return tid
 
 def upload_trade_image(trade_id, image_data):
@@ -426,6 +450,30 @@ def submit_review(trade_id, data):
              data.get('custom_condition2') or None, data.get('custom_condition2_met') or None,
              data.get('custom_condition3') or None, data.get('custom_condition3_met') or None,
              data.get('comment') or None, data['verdict']))
+        # Fetch trade submitter to notify them
+        trade_row = con.execute("SELECT submitted_by FROM trades WHERE id=?", (trade_id,)).fetchone()
+        submitter_name = trade_row[0] if trade_row else None
+
+    # Notify trade submitter about the new review
+    if submitter_name:
+        submitter_id = get_user_id_by_trader_name(submitter_name)
+        if submitter_id:
+            verdict_label = data['verdict']
+            create_notification(
+                submitter_id, 'new_review',
+                f"Obchod {trade_id} dostal hodnotenie od {data['reviewer']}: {verdict_label}",
+                trade_id=trade_id)
+
+    # Check if team verdict changed to "Obchodovať" and notify submitter
+    enriched = get_trade(trade_id)
+    if enriched and enriched.get('team_verdict') == 'Obchodovať' and submitter_name:
+        submitter_id = get_user_id_by_trader_name(submitter_name)
+        if submitter_id:
+            create_notification(
+                submitter_id, 'trade_approved',
+                f"Obchod {trade_id} ({enriched.get('instrument','')}) bol schválený tímom! Môžeš obchodovať.",
+                trade_id=trade_id)
+
     return rid
 
 def get_dashboard():
@@ -483,6 +531,80 @@ def get_trader_stats():
                 'avg_rrr_proposed': round(avg_rrr_row, 2) if avg_rrr_row else None,
             })
     return stats
+
+# ─── CONDITIONS ────────────────────────────────────────────────────────────────
+
+def get_conditions(ctype=None, trader=None):
+    with get_db() as con:
+        if ctype == 'team':
+            rows = con.execute(
+                "SELECT * FROM conditions WHERE type='team' ORDER BY position, id").fetchall()
+        elif ctype == 'personal' and trader:
+            rows = con.execute(
+                "SELECT * FROM conditions WHERE type='personal' AND trader=? ORDER BY position, id",
+                (trader,)).fetchall()
+        else:
+            rows = con.execute(
+                "SELECT * FROM conditions ORDER BY type, position, id").fetchall()
+        return rows_to_list(rows)
+
+def create_condition(data):
+    with get_db() as con:
+        # auto-position: place at end
+        max_pos = con.execute(
+            "SELECT COALESCE(MAX(position),0) FROM conditions WHERE type=? AND (trader=? OR trader IS NULL)",
+            (data.get('type','team'), data.get('trader'))).fetchone()[0]
+        con.execute(
+            "INSERT INTO conditions (type, trader, text, position, created_at) VALUES (?,?,?,?,?)",
+            (data.get('type','team'), data.get('trader') or None,
+             data['text'].strip(), int(max_pos) + 1, str(datetime.now())))
+        return con.execute("SELECT last_insert_rowid()").fetchone()[0]
+
+def delete_condition(cid):
+    with get_db() as con:
+        con.execute("DELETE FROM conditions WHERE id=?", (cid,))
+
+# ─── NOTIFICATIONS ─────────────────────────────────────────────────────────────
+
+def get_notifications(user_id):
+    with get_db() as con:
+        rows = con.execute(
+            "SELECT * FROM notifications WHERE user_id=? ORDER BY created_at DESC LIMIT 50",
+            (user_id,)).fetchall()
+        return rows_to_list(rows)
+
+def get_unread_count(user_id):
+    with get_db() as con:
+        return con.execute(
+            "SELECT COUNT(*) FROM notifications WHERE user_id=? AND read=0",
+            (user_id,)).fetchone()[0]
+
+def mark_all_read(user_id):
+    with get_db() as con:
+        con.execute("UPDATE notifications SET read=1 WHERE user_id=?", (user_id,))
+
+def create_notification(user_id, ntype, message, trade_id=None):
+    with get_db() as con:
+        con.execute(
+            "INSERT INTO notifications (user_id, type, message, trade_id, read, created_at) VALUES (?,?,?,?,0,?)",
+            (user_id, ntype, message, trade_id, str(datetime.now())))
+
+def notify_all_users(ntype, message, trade_id=None, exclude_user_id=None):
+    """Send a notification to all users (optionally excluding one)."""
+    with get_db() as con:
+        users = con.execute("SELECT id FROM users").fetchall()
+        for u in users:
+            uid = u[0]
+            if exclude_user_id and uid == exclude_user_id:
+                continue
+            con.execute(
+                "INSERT INTO notifications (user_id, type, message, trade_id, read, created_at) VALUES (?,?,?,?,0,?)",
+                (uid, ntype, message, trade_id, str(datetime.now())))
+
+def get_user_id_by_trader_name(trader_name):
+    with get_db() as con:
+        row = con.execute("SELECT id FROM users WHERE trader_name=?", (trader_name,)).fetchone()
+        return row[0] if row else None
 
 # ─── HTTP HANDLER ──────────────────────────────────────────────────────────────
 
@@ -567,6 +689,21 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if path == '/api/stats/traders':
             return self.send_json(get_trader_stats())
 
+        if path == '/api/conditions':
+            user = self.require_auth()
+            if not user: return
+            qs = urllib.parse.parse_qs(urllib.parse.urlparse(self.path).query)
+            ctype = qs.get('type', [None])[0]
+            trader = qs.get('trader', [None])[0]
+            return self.send_json(get_conditions(ctype, trader))
+
+        if path == '/api/notifications':
+            user = self.require_auth()
+            if not user: return
+            notifs = get_notifications(user['id'])
+            unread = get_unread_count(user['id'])
+            return self.send_json({'notifications': notifs, 'unread': unread})
+
         if path == '/api/users':
             user = self.require_admin()
             if not user: return
@@ -631,6 +768,27 @@ class Handler(http.server.BaseHTTPRequestHandler):
                     return self.send_json({'ok': True}, 201)
                 except Exception as e:
                     return self.send_error_json(f'Chyba: {e}')
+
+            if path == '/api/conditions':
+                user = self.require_auth()
+                if not user: return
+                ctype = body.get('type', 'team')
+                # Only admins can create team conditions
+                if ctype == 'team' and user['role'] != 'admin':
+                    return self.send_error_json('Iba admin môže pridávať tímové podmienky', 403)
+                if not body.get('text', '').strip():
+                    return self.send_error_json('Text podmienky je povinný')
+                # For personal conditions, associate with current trader
+                if ctype == 'personal':
+                    body['trader'] = user.get('trader_name') or user['username']
+                cid = create_condition(body)
+                return self.send_json({'id': cid}, 201)
+
+            if path == '/api/notifications/read':
+                user = self.require_auth()
+                if not user: return
+                mark_all_read(user['id'])
+                return self.send_json({'ok': True})
 
             if path == '/api/config/traders':
                 user = self.require_admin()
@@ -744,6 +902,26 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 user = self.require_admin()
                 if not user: return
                 delete_user(int(m.group(1)))
+                return self.send_json({'ok': True})
+
+            m = re.match(r'^/api/conditions/(\d+)$', path)
+            if m:
+                user = self.require_auth()
+                if not user: return
+                cid = int(m.group(1))
+                # Check ownership
+                with get_db() as con:
+                    cond = con.execute("SELECT * FROM conditions WHERE id=?", (cid,)).fetchone()
+                if not cond:
+                    return self.send_error_json('Podmienka nenájdená', 404)
+                cond = dict(cond)
+                if cond['type'] == 'team' and user['role'] != 'admin':
+                    return self.send_error_json('Iba admin môže mazať tímové podmienky', 403)
+                if cond['type'] == 'personal':
+                    my_name = user.get('trader_name') or user['username']
+                    if cond['trader'] != my_name and user['role'] != 'admin':
+                        return self.send_error_json('Nemáš oprávnenie', 403)
+                delete_condition(cid)
                 return self.send_json({'ok': True})
 
             self.send_error_json('Not found', 404)
