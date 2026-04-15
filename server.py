@@ -185,6 +185,13 @@ def init_db():
             read INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL
         )""")
+        con.execute("""CREATE TABLE IF NOT EXISTS trade_images (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            trade_id TEXT NOT NULL REFERENCES trades(id),
+            image_data TEXT NOT NULL,
+            position INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+        )""")
 
         # Migrate existing trades table (add new columns if missing)
         migrations = [
@@ -216,8 +223,14 @@ def init_db():
         existing_params = con.execute("SELECT COUNT(*) FROM parameters").fetchone()[0]
         if existing_params == 0:
             con.executemany("INSERT INTO parameters (key, value) VALUES (?,?)", [
-                ('min_rrr', 1.5), ('max_risk_trend', 1.0), ('max_risk_counter', 0.5)
+                ('min_rrr', 1.5), ('max_risk_trend', 1.0), ('max_risk_counter', 0.5),
+                ('min_approvals', 2.0),
             ])
+        # Add min_approvals if missing from existing DBs
+        try:
+            con.execute("INSERT OR IGNORE INTO parameters (key, value) VALUES ('min_approvals', 2.0)")
+        except Exception:
+            pass
 
         # Default users (create if none exist)
         existing_users = con.execute("SELECT COUNT(*) FROM users").fetchone()[0]
@@ -329,14 +342,14 @@ def next_review_id():
         num = int(last[0].split('-')[1]) + 1
         return f"HV-{num:03d}"
 
-def calc_team_verdict(approved, revision, rejected):
+def calc_team_verdict(approved, revision, rejected, min_approvals=2):
     total = approved + revision + rejected
     if total == 0: return "Bez hodnotenia"
-    if approved >= 2: return "Obchodovať"
+    if approved >= int(min_approvals): return "Obchodovať"
     if approved >= 1 and revision >= 1 and rejected == 0: return "Na potvrdenie"
     return "Neobchodovať"
 
-def enrich_trade(trade_dict, reviews):
+def enrich_trade(trade_dict, reviews, min_approvals=2):
     approved = sum(1 for r in reviews if r['verdict'] == 'Schválené')
     revision  = sum(1 for r in reviews if r['verdict'] == 'Na revíziu')
     rejected  = sum(1 for r in reviews if r['verdict'] == 'Zamietnuté')
@@ -344,12 +357,16 @@ def enrich_trade(trade_dict, reviews):
     sls     = [r['proposed_sl']    for r in reviews if r['proposed_sl']]
     tps     = [r['proposed_tp']    for r in reviews if r['proposed_tp']]
     rrrs    = [r['rrr']            for r in reviews if r['rrr']]
+    total   = len(reviews)
     return {
         **trade_dict,
         'reviews': reviews,
         'approved': approved, 'revision': revision, 'rejected': rejected,
-        'review_count': len(reviews),
-        'team_verdict': calc_team_verdict(approved, revision, rejected),
+        'review_count': total,
+        'approved_pct': round(approved/total*100) if total else 0,
+        'revision_pct': round(revision/total*100) if total else 0,
+        'rejected_pct': round(rejected/total*100) if total else 0,
+        'team_verdict': calc_team_verdict(approved, revision, rejected, min_approvals),
         'avg_entry': round(sum(entries)/len(entries), 5) if entries else None,
         'avg_sl':    round(sum(sls)/len(sls), 5)         if sls    else None,
         'avg_tp':    round(sum(tps)/len(tps), 5)         if tps    else None,
@@ -357,21 +374,37 @@ def enrich_trade(trade_dict, reviews):
     }
 
 def get_all_trades():
+    params = get_parameters()
+    min_approvals = int(params.get('min_approvals', 2))
     with get_db() as con:
         trades = rows_to_list(con.execute("SELECT * FROM trades ORDER BY created_at DESC, id DESC").fetchall())
         for t in trades:
             t.pop('image_data', None)  # exclude heavy image data from list
             reviews = rows_to_list(con.execute("SELECT * FROM reviews WHERE trade_id=? ORDER BY reviewed_at", (t['id'],)).fetchall())
-            t.update(enrich_trade(t, reviews))
+            t.update(enrich_trade(t, reviews, min_approvals))
         return trades
 
 def get_trade(trade_id):
+    params = get_parameters()
+    min_approvals = int(params.get('min_approvals', 2))
     with get_db() as con:
         t = con.execute("SELECT * FROM trades WHERE id=?", (trade_id,)).fetchone()
         if not t: return None
         trade = dict(t)
         reviews = rows_to_list(con.execute("SELECT * FROM reviews WHERE trade_id=? ORDER BY reviewed_at", (trade_id,)).fetchall())
-        return enrich_trade(trade, reviews)
+        # Collect all images: legacy image_data + trade_images table
+        images = []
+        if trade.get('image_data'):
+            images.append({'id': 0, 'image_data': trade.pop('image_data'), 'position': -1})
+        else:
+            trade.pop('image_data', None)
+        extra = rows_to_list(con.execute(
+            "SELECT id, image_data, position FROM trade_images WHERE trade_id=? ORDER BY position, id",
+            (trade_id,)).fetchall())
+        images.extend(extra)
+        result = enrich_trade(trade, reviews, min_approvals)
+        result['images'] = images
+        return result
 
 def create_trade(data):
     tid = next_trade_id()
@@ -405,6 +438,18 @@ def create_trade(data):
 def upload_trade_image(trade_id, image_data):
     with get_db() as con:
         con.execute("UPDATE trades SET image_data=? WHERE id=?", (image_data, trade_id))
+
+def add_trade_image(trade_id, image_data):
+    with get_db() as con:
+        max_pos = con.execute(
+            "SELECT COALESCE(MAX(position),0) FROM trade_images WHERE trade_id=?", (trade_id,)).fetchone()[0]
+        con.execute(
+            "INSERT INTO trade_images (trade_id, image_data, position, created_at) VALUES (?,?,?,?)",
+            (trade_id, image_data, int(max_pos)+1, str(datetime.now())))
+
+def delete_trade_image(trade_id, img_id):
+    with get_db() as con:
+        con.execute("DELETE FROM trade_images WHERE id=? AND trade_id=?", (img_id, trade_id))
 
 def close_trade(trade_id, data):
     result_pips = float(data['result_pips']) if data.get('result_pips') else None
@@ -465,7 +510,7 @@ def submit_review(trade_id, data):
                 trade_id=trade_id)
 
     # Check if team verdict changed to "Obchodovať" and notify submitter
-    enriched = get_trade(trade_id)
+    enriched = get_trade(trade_id)  # already uses min_approvals from parameters
     if enriched and enriched.get('team_verdict') == 'Obchodovať' and submitter_name:
         submitter_id = get_user_id_by_trader_name(submitter_name)
         if submitter_id:
@@ -714,6 +759,17 @@ class Handler(http.server.BaseHTTPRequestHandler):
             t = get_trade(m.group(1))
             return self.send_json(t) if t else self.send_error_json('Not found', 404)
 
+        m = re.match(r'^/api/trades/([^/]+)/images$', path)
+        if m:
+            user = self.require_auth()
+            if not user: return
+            trade_id = m.group(1)
+            with get_db() as con:
+                imgs = rows_to_list(con.execute(
+                    "SELECT id, position FROM trade_images WHERE trade_id=? ORDER BY position, id",
+                    (trade_id,)).fetchall())
+            return self.send_json(imgs)
+
         # Static files
         if path == '/':
             file_path = PUBLIC_DIR / 'index.html'
@@ -843,6 +899,16 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 upload_trade_image(trade_id, image_data)
                 return self.send_json({'ok': True})
 
+            m = re.match(r'^/api/trades/([^/]+)/images$', path)
+            if m:
+                user = self.require_auth()
+                if not user: return
+                trade_id = m.group(1)
+                image_data = body.get('image_data')
+                if not image_data: return self.send_error_json('Chýba image_data')
+                add_trade_image(trade_id, image_data)
+                return self.send_json({'ok': True}, 201)
+
             self.send_error_json('Not found', 404)
         except Exception as e:
             self.send_error_json(str(e), 500)
@@ -902,6 +968,14 @@ class Handler(http.server.BaseHTTPRequestHandler):
                 user = self.require_admin()
                 if not user: return
                 delete_user(int(m.group(1)))
+                return self.send_json({'ok': True})
+
+            m = re.match(r'^/api/trades/([^/]+)/images/(\d+)$', path)
+            if m:
+                user = self.require_auth()
+                if not user: return
+                trade_id, img_id = m.group(1), int(m.group(2))
+                delete_trade_image(trade_id, img_id)
                 return self.send_json({'ok': True})
 
             m = re.match(r'^/api/conditions/(\d+)$', path)

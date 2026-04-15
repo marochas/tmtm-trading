@@ -124,9 +124,27 @@
     /* Image upload */
     .img-upload-box { border: 2px dashed var(--border); border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: border-color 0.15s; }
     .img-upload-box:hover { border-color: var(--accent); }
-    .img-upload-box.has-img { padding: 0; border-style: solid; overflow: hidden; }
-    .img-upload-box img { width: 100%; max-height: 300px; object-fit: contain; display: block; border-radius: 8px; }
     .img-preview-full { width: 100%; max-height: 400px; object-fit: contain; border-radius: 10px; border: 1px solid var(--border); cursor: pointer; }
+
+    /* Multi-image gallery */
+    .img-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; margin-bottom: 10px; }
+    .img-thumb-wrap { position: relative; border-radius: 8px; overflow: hidden; border: 1px solid var(--border); aspect-ratio: 16/10; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s; }
+    .img-thumb-wrap:hover { border-color: var(--accent); box-shadow: 0 4px 12px rgba(79,142,247,0.2); }
+    .img-thumb-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .img-thumb-del { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.75); border: none; color: #fff; border-radius: 50%; width: 22px; height: 22px; cursor: pointer; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.15s; }
+    .img-thumb-wrap:hover .img-thumb-del { opacity: 1; }
+    .img-add-btn { border: 2px dashed var(--border); border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; transition: border-color 0.15s, background 0.15s; aspect-ratio: 16/10; color: var(--text2); font-size: 0.8rem; }
+    .img-add-btn:hover { border-color: var(--accent); background: var(--accent-glow); color: var(--accent); }
+    .img-lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.92); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 20px; }
+    .img-lightbox img { max-width: 95vw; max-height: 90vh; border-radius: 10px; object-fit: contain; }
+    .img-lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); border: none; color: #fff; border-radius: 50%; width: 44px; height: 44px; cursor: pointer; font-size: 1.4rem; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+    .img-lightbox-nav:hover { background: rgba(255,255,255,0.2); }
+    .img-lightbox-close { position: absolute; top: 16px; right: 20px; background: rgba(255,255,255,0.1); border: none; color: #fff; border-radius: 50%; width: 38px; height: 38px; cursor: pointer; font-size: 1.3rem; display: flex; align-items: center; justify-content: center; }
+
+    /* Verdict percentage bar */
+    .verdict-pct-bar { display: flex; height: 6px; border-radius: 4px; overflow: hidden; margin: 10px 0 6px; gap: 2px; }
+    .verdict-pct-seg { height: 100%; border-radius: 3px; transition: width 0.4s; }
+    .verdict-pct-labels { display: flex; gap: 16px; flex-wrap: wrap; font-size: 0.79rem; }
 
     /* Page headers */
     .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
@@ -309,6 +327,81 @@ function TradeStatusBadge({ status }) {
   return <span className={`badge ${map[status] || 'badge-gray'}`}>{icons[status] || ''} {status}</span>;
 }
 
+// ─── IMAGE GALLERY ────────────────────────────────────────────────────────────
+
+function ImageLightbox({ images, startIndex, onClose }) {
+  const [idx, setIdx] = useState(startIndex || 0);
+  const prev = () => setIdx(i => (i - 1 + images.length) % images.length);
+  const next = () => setIdx(i => (i + 1) % images.length);
+
+  useEffect(() => {
+    const handler = (e) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowLeft') prev();
+      if (e.key === 'ArrowRight') next();
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  return (
+    <div className="img-lightbox" onClick={onClose}>
+      <button className="img-lightbox-close" onClick={onClose}>×</button>
+      {images.length > 1 && (
+        <>
+          <button className="img-lightbox-nav" style={{left:16}} onClick={e => { e.stopPropagation(); prev(); }}>‹</button>
+          <button className="img-lightbox-nav" style={{right:16}} onClick={e => { e.stopPropagation(); next(); }}>›</button>
+        </>
+      )}
+      <img src={images[idx]?.image_data} alt={`Obrázok ${idx+1}`} onClick={e => e.stopPropagation()}/>
+      {images.length > 1 && (
+        <div style={{position:'absolute', bottom:20, left:'50%', transform:'translateX(-50%)', color:'rgba(255,255,255,0.6)', fontSize:'0.82rem'}}>
+          {idx+1} / {images.length}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ImageGallery({ images, onDelete, onAdd, readonly = false }) {
+  const [lightbox, setLightbox] = useState(null);
+  const fileRef = useRef(null);
+
+  const handleFiles = async (files) => {
+    for (const file of files) {
+      if (!file.type.startsWith('image/')) continue;
+      const data = await resizeImageToBase64(file);
+      if (onAdd) await onAdd(data);
+    }
+  };
+
+  return (
+    <>
+      <div className="img-gallery">
+        {images.map((img, i) => (
+          <div key={img.id ?? i} className="img-thumb-wrap" onClick={() => setLightbox(i)}>
+            <img src={img.image_data} alt={`Obrázok ${i+1}`}/>
+            {!readonly && onDelete && (
+              <button className="img-thumb-del" onClick={e => { e.stopPropagation(); onDelete(img); }}>×</button>
+            )}
+          </div>
+        ))}
+        {!readonly && (
+          <div className="img-add-btn" onClick={() => fileRef.current?.click()}>
+            <input ref={fileRef} type="file" accept="image/*" multiple style={{display:'none'}}
+              onChange={e => { handleFiles(Array.from(e.target.files)); e.target.value=''; }}/>
+            <span style={{fontSize:'1.5rem'}}>📷</span>
+            <span>Pridať foto</span>
+          </div>
+        )}
+      </div>
+      {lightbox !== null && (
+        <ImageLightbox images={images} startIndex={lightbox} onClose={() => setLightbox(null)}/>
+      )}
+    </>
+  );
+}
+
 // ─── LOGIN PAGE ───────────────────────────────────────────────────────────────
 
 function LoginPage({ onLogin }) {
@@ -461,6 +554,46 @@ function Dashboard({ onNavigate }) {
   );
 }
 
+// ─── TRADE IMAGE MANAGER (in detail view) ─────────────────────────────────────
+
+function TradeImageManager({ trade, currentUser, onReload }) {
+  const [uploading, setUploading] = useState(false);
+  const canEdit = currentUser && (currentUser.role === 'admin' || currentUser.trader_name === trade.submitted_by);
+
+  const handleAdd = async (base64) => {
+    setUploading(true);
+    try {
+      await apiFetch(`/api/trades/${trade.id}/images`, { method: 'POST', body: { image_data: base64 } });
+      onReload();
+    } catch(e) { alert(e.message); }
+    setUploading(false);
+  };
+
+  const handleDelete = async (img) => {
+    if (!confirm('Vymazať tento obrázok?')) return;
+    if (img.id === 0) {
+      // Legacy image_data — can't delete via this UI easily, skip
+      return;
+    }
+    try {
+      await apiFetch(`/api/trades/${trade.id}/images/${img.id}`, { method: 'DELETE' });
+      onReload();
+    } catch(e) { alert(e.message); }
+  };
+
+  return (
+    <div>
+      {uploading && <div style={{color:'var(--text2)', fontSize:'0.82rem', marginBottom:8}}>⏳ Nahrávam...</div>}
+      <ImageGallery
+        images={trade.images || []}
+        onAdd={canEdit ? handleAdd : null}
+        onDelete={canEdit ? handleDelete : null}
+        readonly={!canEdit}
+      />
+    </div>
+  );
+}
+
 // ─── TRADES LIST ─────────────────────────────────────────────────────────────
 
 function TradesList({ onNavigate }) {
@@ -550,9 +683,9 @@ function TradeCard({ trade: t, onNavigate }) {
             {t.rejected > 0 && <div className="votes-bar-seg" style={{width:`${t.rejected/total*100}%`, background:'var(--red)'}}/>}
           </div>
           <div className="trade-votes">
-            <span className="vote-pill vote-pill-green">✅ {t.approved}</span>
-            <span className="vote-pill vote-pill-yellow">⚠️ {t.revision}</span>
-            <span className="vote-pill vote-pill-red">❌ {t.rejected}</span>
+            <span className="vote-pill vote-pill-green">✅ {t.approved} <span style={{opacity:0.7,fontSize:'0.7rem'}}>({t.approved_pct||Math.round(t.approved/total*100)}%)</span></span>
+            <span className="vote-pill vote-pill-yellow">⚠️ {t.revision} <span style={{opacity:0.7,fontSize:'0.7rem'}}>({t.revision_pct||Math.round(t.revision/total*100)}%)</span></span>
+            <span className="vote-pill vote-pill-red">❌ {t.rejected} <span style={{opacity:0.7,fontSize:'0.7rem'}}>({t.rejected_pct||Math.round(t.rejected/total*100)}%)</span></span>
             <span style={{fontSize:'0.75rem', color:'var(--text2)', marginLeft:'auto'}}>{total} hodnotení</span>
           </div>
         </div>
@@ -570,7 +703,7 @@ function TradeDetail({ tradeId, onNavigate, onReview, currentUser }) {
   const [loading, setLoading] = useState(true);
   const [config, setConfig] = useState(null);
   const [showClose, setShowClose] = useState(false);
-  const [showImgFull, setShowImgFull] = useState(false);
+  // showImgFull removed — now using ImageGallery with built-in lightbox
 
   const reload = useCallback(() => {
     apiFetch(`/api/trades/${tradeId}`).then(t => { setTrade(t); setLoading(false); });
@@ -701,12 +834,20 @@ function TradeDetail({ tradeId, onNavigate, onReview, currentUser }) {
         </div>
       </div>
 
-      {/* TradingView Screenshot */}
-      {trade.image_data && (
+      {/* TradingView Screenshots — multi-image gallery */}
+      {trade.images && trade.images.length > 0 && (
+        <div className="card" style={{marginBottom:20}}>
+          <div style={{display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12}}>
+            <div className="section-title" style={{marginBottom:0}}>📸 TradingView analýza ({trade.images.length})</div>
+          </div>
+          <TradeImageManager trade={trade} currentUser={currentUser} onReload={reload}/>
+        </div>
+      )}
+      {/* Allow adding images even if none exist yet */}
+      {trade.images && trade.images.length === 0 && (
         <div className="card" style={{marginBottom:20}}>
           <div className="section-title">📸 TradingView analýza</div>
-          <img src={trade.image_data} alt="TradingView chart" className="img-preview-full"
-            onClick={() => setShowImgFull(true)} title="Klikni pre zväčšenie"/>
+          <TradeImageManager trade={trade} currentUser={currentUser} onReload={reload}/>
         </div>
       )}
 
@@ -735,19 +876,35 @@ function TradeDetail({ tradeId, onNavigate, onReview, currentUser }) {
         </div>
       )}
 
-      {/* Votes summary */}
+      {/* Votes summary with percentages */}
       <div className="card" style={{marginBottom:20}}>
         <div className="section-title">Hlasovanie tímu</div>
-        <div style={{display:'flex', gap:24, marginBottom:12}}>
-          {[['var(--green)', trade.approved, 'Schválené'],
-            ['var(--yellow)', trade.revision, 'Na revíziu'],
-            ['var(--red)', trade.rejected, 'Zamietnuté']].map(([color, val, label]) => (
-            <div key={label} style={{display:'flex', alignItems:'center', gap:8}}>
-              <span style={{color, fontSize:'1.5rem', fontWeight:700}}>{val}</span>
-              <span style={{color:'var(--text2)', fontSize:'0.85rem'}}>{label}</span>
+        {trade.review_count > 0 ? (
+          <>
+            <div className="verdict-pct-bar">
+              {trade.approved > 0 && <div className="verdict-pct-seg" style={{width:`${trade.approved_pct}%`, background:'var(--green)'}}/>}
+              {trade.revision > 0 && <div className="verdict-pct-seg" style={{width:`${trade.revision_pct}%`, background:'var(--yellow)'}}/>}
+              {trade.rejected > 0 && <div className="verdict-pct-seg" style={{width:`${trade.rejected_pct}%`, background:'var(--red)'}}/>}
             </div>
-          ))}
-        </div>
+            <div className="verdict-pct-labels" style={{marginBottom:12}}>
+              <span style={{color:'var(--green)', fontWeight:600}}>
+                ✅ Schválené: <strong>{trade.approved}</strong>
+                <span style={{opacity:0.7, marginLeft:4}}>({trade.approved_pct}%)</span>
+              </span>
+              <span style={{color:'var(--yellow)', fontWeight:600}}>
+                ⚠️ Na revíziu: <strong>{trade.revision}</strong>
+                <span style={{opacity:0.7, marginLeft:4}}>({trade.revision_pct}%)</span>
+              </span>
+              <span style={{color:'var(--red)', fontWeight:600}}>
+                ❌ Zamietnuté: <strong>{trade.rejected}</strong>
+                <span style={{opacity:0.7, marginLeft:4}}>({trade.rejected_pct}%)</span>
+              </span>
+              <span style={{color:'var(--text2)', marginLeft:'auto', fontSize:'0.8rem'}}>{trade.review_count} hodnotení</span>
+            </div>
+          </>
+        ) : (
+          <div style={{color:'var(--text2)', fontSize:'0.85rem', marginBottom:10}}>Zatiaľ žiadne hodnotenia</div>
+        )}
         {pendingTraders.length > 0 && (
           <div style={{fontSize:'0.8rem', color:'var(--text2)'}}>⏳ Čakáme na: {pendingTraders.join(', ')}</div>
         )}
@@ -760,11 +917,6 @@ function TradeDetail({ tradeId, onNavigate, onReview, currentUser }) {
 
       {showClose && (
         <CloseTradeModal trade={trade} onClose={() => setShowClose(false)} onClosed={() => { setShowClose(false); reload(); }}/>
-      )}
-      {showImgFull && (
-        <div className="modal-bg" onClick={() => setShowImgFull(false)}>
-          <img src={trade.image_data} alt="chart" style={{maxWidth:'95vw', maxHeight:'90vh', borderRadius:10}}/>
-        </div>
       )}
     </div>
   );
@@ -907,20 +1059,19 @@ function NewTradeForm({ onNavigate, config, currentUser }) {
     entry_price: '', stop_loss: '', take_profit: '',
     condition1: '', condition2: '', condition3: '', condition4: '',
   });
-  const [imageFile, setImageFile] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [pendingImages, setPendingImages] = useState([]); // [{tempId, image_data}]
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const fileInputRef = useRef();
 
   const set = (k, v) => setForm(f => ({...f, [k]: v}));
 
-  const handleImageSelect = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setImageFile(file);
-    const base64 = await resizeImageToBase64(file);
-    setImagePreview(base64);
+  const handleAddImage = async (base64) => {
+    const tempId = Date.now() + Math.random();
+    setPendingImages(imgs => [...imgs, { id: tempId, image_data: base64 }]);
+  };
+
+  const handleRemovePending = (img) => {
+    setPendingImages(imgs => imgs.filter(i => i.id !== img.id));
   };
 
   const handleSubmit = async (e) => {
@@ -929,9 +1080,9 @@ function NewTradeForm({ onNavigate, config, currentUser }) {
     setLoading(true); setError('');
     try {
       const { id } = await apiFetch('/api/trades', { method: 'POST', body: form });
-      // Upload image if selected
-      if (imagePreview) {
-        await apiFetch(`/api/trades/${id}/image`, { method: 'POST', body: { image_data: imagePreview } });
+      // Upload all pending images
+      for (const img of pendingImages) {
+        await apiFetch(`/api/trades/${id}/images`, { method: 'POST', body: { image_data: img.image_data } });
       }
       onNavigate('trade-detail', id);
     } catch (e) { setError(e.message); setLoading(false); }
@@ -1036,29 +1187,19 @@ function NewTradeForm({ onNavigate, config, currentUser }) {
           )}
         </div>
 
-        {/* Image upload */}
+        {/* Image upload - multi */}
         <div className="card" style={{marginBottom:16}}>
-          <div className="section-title">📸 TradingView screenshot (voliteľné)</div>
-          <input type="file" accept="image/*" ref={fileInputRef} style={{display:'none'}} onChange={handleImageSelect}/>
-          <div className={`img-upload-box ${imagePreview ? 'has-img' : ''}`}
-            onClick={() => !imagePreview && fileInputRef.current?.click()}>
-            {imagePreview ? (
-              <div style={{position:'relative'}}>
-                <img src={imagePreview} alt="preview"/>
-                <button type="button" onClick={e => { e.stopPropagation(); setImagePreview(null); setImageFile(null); }}
-                  style={{position:'absolute', top:8, right:8, background:'rgba(0,0,0,0.7)', border:'none', color:'#fff',
-                    borderRadius:'50%', width:28, height:28, cursor:'pointer', fontSize:'1rem', display:'flex', alignItems:'center', justifyContent:'center'}}>
-                  ×
-                </button>
-              </div>
-            ) : (
-              <div style={{color:'var(--text2)'}}>
-                <div style={{fontSize:'2rem', marginBottom:8}}>📷</div>
-                <div style={{fontSize:'0.875rem', marginBottom:4}}>Klikni pre nahratie screenshotu</div>
-                <div style={{fontSize:'0.75rem'}}>PNG, JPG – automaticky komprimované</div>
-              </div>
-            )}
-          </div>
+          <div className="section-title">📸 TradingView screenshoty (voliteľné, viac obrázkov)</div>
+          <ImageGallery
+            images={pendingImages}
+            onAdd={handleAddImage}
+            onDelete={handleRemovePending}
+          />
+          {pendingImages.length === 0 && (
+            <div style={{color:'var(--text2)', fontSize:'0.78rem', marginTop:4}}>
+              Môžeš pridať viac screenshotov naraz — napr. HTF + LTF analýzu
+            </div>
+          )}
         </div>
 
         {/* Conditions */}
@@ -1454,8 +1595,8 @@ function Settings({ config, onConfigChange, currentUser }) {
       )}
 
       <div className="card settings-section">
-        <div className="section-title">Parametre rizika</div>
-        <div className="form-grid form-grid-3" style={{maxWidth:480}}>
+        <div className="section-title">Parametre rizika a hlasovania</div>
+        <div className="form-grid form-grid-3" style={{maxWidth:560}}>
           <div className="form-group">
             <label>Min. RRR</label>
             <input type="number" step="0.1" value={params.min_rrr} onChange={e => setParams(p => ({...p, min_rrr: e.target.value}))}
@@ -1471,15 +1612,22 @@ function Settings({ config, onConfigChange, currentUser }) {
             <input type="number" step="0.1" value={params.max_risk_counter} onChange={e => setParams(p => ({...p, max_risk_counter: e.target.value}))}
               readOnly={!isAdmin}/>
           </div>
+          <div className="form-group">
+            <label>⚖️ Min. schválenia pre "Obchodovať"</label>
+            <input type="number" step="1" min="1" max="10"
+              value={params.min_approvals ?? 2}
+              onChange={e => setParams(p => ({...p, min_approvals: e.target.value}))}
+              readOnly={!isAdmin}/>
+          </div>
         </div>
         {isAdmin && (
           <div style={{marginTop:14}}>
             <button className="btn btn-primary" onClick={saveParams}>💾 Uložiť parametre</button>
           </div>
         )}
-        <div style={{marginTop:12, fontSize:'0.8rem', color:'var(--text2)', lineHeight:1.6}}>
-          <strong>Logika verdiktu:</strong><br/>
-          ✅ <strong>Obchodovať</strong> — aspoň 2 schválenia<br/>
+        <div style={{marginTop:12, padding:'10px 14px', background:'var(--bg3)', borderRadius:8, fontSize:'0.8rem', color:'var(--text2)', lineHeight:1.7}}>
+          <strong style={{color:'var(--text)'}}>Logika verdiktu:</strong><br/>
+          ✅ <strong>Obchodovať</strong> — aspoň <strong style={{color:'var(--accent)'}}>{params.min_approvals ?? 2}</strong> schválenia<br/>
           ⚠️ <strong>Na potvrdenie</strong> — aspoň 1 schválenie + 1 revízia, žiadne zamietnutie<br/>
           ❌ <strong>Neobchodovať</strong> — tím sa nezhodol
         </div>
