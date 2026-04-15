@@ -19,95 +19,118 @@ from pathlib import Path
 
 PORT = int(os.environ.get("PORT", 3000))
 
-# DB_PATH: použi env premennú pre Railway Volume, inak lokálny súbor
+# DB_PATH: lokálna SQLite (fallback ak Turso nie je nastavený)
 _default_db = str(Path(__file__).parent / "trading.db")
 DB_PATH = Path(os.environ.get("DB_PATH", _default_db))
-DB_PATH.parent.mkdir(parents=True, exist_ok=True)  # vytvor adresár ak neexistuje
+DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+
+# Turso cloud SQLite (persistentné úložisko)
+TURSO_URL   = os.environ.get("TURSO_URL")
+TURSO_TOKEN = os.environ.get("TURSO_TOKEN")
 
 PUBLIC_DIR = Path(__file__).parent / "public"
 
 # ─── DATABASE ─────────────────────────────────────────────────────────────────
 
+class _Row:
+    """sqlite3.Row-kompatibilný typ pre libsql_experimental aj sqlite3."""
+    __slots__ = ('_data', '_keys')
+    def __init__(self, cursor, data):
+        self._keys = tuple(col[0] for col in cursor.description)
+        self._data = tuple(data)
+    def __getitem__(self, key):
+        if isinstance(key, int):
+            return self._data[key]
+        return self._data[self._keys.index(key)]
+    def keys(self):
+        return list(self._keys)
+    def __iter__(self):
+        return iter(zip(self._keys, self._data))
+    def __len__(self):
+        return len(self._data)
+
 def get_db():
-    con = sqlite3.connect(str(DB_PATH))
-    con.row_factory = sqlite3.Row
-    con.execute("PRAGMA journal_mode=WAL")
+    if TURSO_URL and TURSO_TOKEN:
+        import libsql_experimental as libsql
+        con = libsql.connect(TURSO_URL, auth_token=TURSO_TOKEN)
+    else:
+        con = sqlite3.connect(str(DB_PATH))
+        con.execute("PRAGMA journal_mode=WAL")
+    con.row_factory = _Row
     return con
 
 def init_db():
     with get_db() as con:
-        con.executescript("""
-            CREATE TABLE IF NOT EXISTS config (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                category TEXT NOT NULL,
-                value TEXT NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS parameters (
-                key TEXT PRIMARY KEY,
-                value REAL NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS trades (
-                id TEXT PRIMARY KEY,
-                created_at TEXT NOT NULL,
-                submitted_by TEXT NOT NULL,
-                instrument TEXT NOT NULL,
-                timeframe TEXT NOT NULL,
-                direction TEXT NOT NULL,
-                trend_context TEXT NOT NULL,
-                htf_confirmed TEXT NOT NULL,
-                entry_type TEXT NOT NULL,
-                idea_description TEXT NOT NULL,
-                condition1 TEXT,
-                condition2 TEXT,
-                condition3 TEXT,
-                condition4 TEXT,
-                entry_price REAL,
-                stop_loss REAL,
-                take_profit REAL,
-                image_data TEXT,
-                trade_status TEXT NOT NULL DEFAULT 'Otvorený',
-                close_date TEXT,
-                result_pips REAL,
-                result_rr REAL,
-                result_note TEXT,
-                status TEXT NOT NULL DEFAULT 'Aktívny'
-            );
-            CREATE TABLE IF NOT EXISTS reviews (
-                id TEXT PRIMARY KEY,
-                trade_id TEXT NOT NULL REFERENCES trades(id),
-                reviewed_at TEXT NOT NULL,
-                reviewer TEXT NOT NULL,
-                proposed_entry REAL,
-                proposed_sl REAL,
-                proposed_tp REAL,
-                rrr REAL,
-                fixed_plan TEXT,
-                proposed_risk_pct REAL,
-                custom_condition1 TEXT,
-                custom_condition1_met TEXT,
-                custom_condition2 TEXT,
-                custom_condition2_met TEXT,
-                custom_condition3 TEXT,
-                custom_condition3_met TEXT,
-                comment TEXT,
-                verdict TEXT NOT NULL,
-                UNIQUE(trade_id, reviewer)
-            );
-            CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT NOT NULL UNIQUE,
-                password_hash TEXT NOT NULL,
-                salt TEXT NOT NULL,
-                role TEXT NOT NULL DEFAULT 'trader',
-                trader_name TEXT,
-                created_at TEXT NOT NULL
-            );
-            CREATE TABLE IF NOT EXISTS sessions (
-                token TEXT PRIMARY KEY,
-                user_id INTEGER NOT NULL REFERENCES users(id),
-                created_at TEXT NOT NULL
-            );
-        """)
+        con.execute("""CREATE TABLE IF NOT EXISTS config (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            category TEXT NOT NULL,
+            value TEXT NOT NULL
+        )""")
+        con.execute("""CREATE TABLE IF NOT EXISTS parameters (
+            key TEXT PRIMARY KEY,
+            value REAL NOT NULL
+        )""")
+        con.execute("""CREATE TABLE IF NOT EXISTS trades (
+            id TEXT PRIMARY KEY,
+            created_at TEXT NOT NULL,
+            submitted_by TEXT NOT NULL,
+            instrument TEXT NOT NULL,
+            timeframe TEXT NOT NULL,
+            direction TEXT NOT NULL,
+            trend_context TEXT NOT NULL,
+            htf_confirmed TEXT NOT NULL,
+            entry_type TEXT NOT NULL,
+            idea_description TEXT NOT NULL,
+            condition1 TEXT,
+            condition2 TEXT,
+            condition3 TEXT,
+            condition4 TEXT,
+            entry_price REAL,
+            stop_loss REAL,
+            take_profit REAL,
+            image_data TEXT,
+            trade_status TEXT NOT NULL DEFAULT 'Otvorený',
+            close_date TEXT,
+            result_pips REAL,
+            result_rr REAL,
+            result_note TEXT,
+            status TEXT NOT NULL DEFAULT 'Aktívny'
+        )""")
+        con.execute("""CREATE TABLE IF NOT EXISTS reviews (
+            id TEXT PRIMARY KEY,
+            trade_id TEXT NOT NULL REFERENCES trades(id),
+            reviewed_at TEXT NOT NULL,
+            reviewer TEXT NOT NULL,
+            proposed_entry REAL,
+            proposed_sl REAL,
+            proposed_tp REAL,
+            rrr REAL,
+            fixed_plan TEXT,
+            proposed_risk_pct REAL,
+            custom_condition1 TEXT,
+            custom_condition1_met TEXT,
+            custom_condition2 TEXT,
+            custom_condition2_met TEXT,
+            custom_condition3 TEXT,
+            custom_condition3_met TEXT,
+            comment TEXT,
+            verdict TEXT NOT NULL,
+            UNIQUE(trade_id, reviewer)
+        )""")
+        con.execute("""CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL UNIQUE,
+            password_hash TEXT NOT NULL,
+            salt TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'trader',
+            trader_name TEXT,
+            created_at TEXT NOT NULL
+        )""")
+        con.execute("""CREATE TABLE IF NOT EXISTS sessions (
+            token TEXT PRIMARY KEY,
+            user_id INTEGER NOT NULL REFERENCES users(id),
+            created_at TEXT NOT NULL
+        )""")
 
         # Migrate existing trades table (add new columns if missing)
         migrations = [
