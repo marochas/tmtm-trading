@@ -49,15 +49,52 @@ class _Row:
     def __len__(self):
         return len(self._data)
 
+class _RowCursor:
+    """Cursor wrapper — aplikuje _Row factory na výsledky libsql_experimental."""
+    def __init__(self, cur):
+        self._cur = cur
+    @property
+    def description(self):
+        return self._cur.description
+    def fetchone(self):
+        row = self._cur.fetchone()
+        return _Row(self._cur, row) if row is not None else None
+    def fetchall(self):
+        rows = self._cur.fetchall()
+        return [_Row(self._cur, r) for r in rows]
+    def __iter__(self):
+        for row in self._cur.fetchall():
+            yield _Row(self._cur, row)
+
+class _LibsqlConnectionWrapper:
+    """Connection wrapper pre libsql_experimental (nepodporuje row_factory)."""
+    def __init__(self, con):
+        self._con = con
+    def execute(self, sql, params=()):
+        return _RowCursor(self._con.execute(sql, params))
+    def executemany(self, sql, seq):
+        self._con.executemany(sql, seq)
+    def commit(self):
+        self._con.commit()
+    def close(self):
+        self._con.close()
+    def __enter__(self):
+        return self
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_type is None:
+            self._con.commit()
+        return False
+
 def get_db():
     if TURSO_URL and TURSO_TOKEN:
         import libsql_experimental as libsql
         con = libsql.connect(TURSO_URL, auth_token=TURSO_TOKEN)
+        return _LibsqlConnectionWrapper(con)
     else:
         con = sqlite3.connect(str(DB_PATH))
         con.execute("PRAGMA journal_mode=WAL")
-    con.row_factory = _Row
-    return con
+        con.row_factory = _Row
+        return con
 
 def init_db():
     with get_db() as con:
